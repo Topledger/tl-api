@@ -149,9 +149,9 @@ const ApiDetailsModal: React.FC<ApiDetailsModalProps> = ({
         setSampleResponse(data);
       }
     } catch (error) {
-      console.error('Error fetching sample response:', error);
+      console.error('Error fetching response:', error);
       setSampleResponse({ 
-        error: 'Failed to fetch sample response', 
+        error: 'Failed to fetch response', 
         details: error instanceof Error ? error.message : 'Unknown error'
       });
     } finally {
@@ -237,13 +237,13 @@ const ApiDetailsModal: React.FC<ApiDetailsModalProps> = ({
 
           {/* Sample Response */}
           <div>
-            <h4 className="font-semibold text-gray-900 mb-3">Sample Response</h4>
+            <h4 className="font-semibold text-gray-900 mb-3">Response snippet</h4>
             
             <div className="border border-gray-200 rounded-lg overflow-hidden h-80">
               <div className="bg-gray-100 h-full flex flex-col">
                 <div className="flex-1 overflow-y-auto">
                   <code className="block p-4 text-sm overflow-x-auto whitespace-pre font-mono">
-                    {sampleResponse ? JSON.stringify(sampleResponse, null, 2) : 'Loading sample response...'}
+                    {sampleResponse ? JSON.stringify(sampleResponse, null, 2) : 'Loading response...'}
                   </code>
                 </div>
                 {sampleResponse && !sampleResponse.error && (

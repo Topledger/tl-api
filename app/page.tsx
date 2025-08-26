@@ -139,7 +139,7 @@ export default function ExplorePage() {
                 placeholder="Search APIs by title, description, or category..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                className="pl-10 w-full rounded-md border-gray-300 shadow-sm focus:border-gray-300 focus:ring-gray-500"
               />
             </div>
               
@@ -151,7 +151,7 @@ export default function ExplorePage() {
                       setSelectedMenuName(e.target.value);
                       setSelectedPageName(''); // Reset page filter when menu changes
                     }}
-                    className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                    className="w-full rounded-md border-gray-300 shadow-sm focus:border-gray-300 focus:ring-gray-500"
                   >
                     <option value="">All Categories</option>
                     {menuNames.map((menuName) => (
@@ -166,7 +166,7 @@ export default function ExplorePage() {
                   <select
                     value={selectedPageName}
                     onChange={(e) => setSelectedPageName(e.target.value)}
-                    className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                    className="w-full rounded-md border-gray-300 shadow-sm focus:border-gray-300 focus:ring-gray-500"
                     disabled={!!selectedMenuName && availablePageNames.length === 0}
                   >
                     <option value="">All Pages</option>
@@ -182,7 +182,7 @@ export default function ExplorePage() {
                   <select
                     value={selectedApiKey}
                     onChange={(e) => setSelectedApiKey(e.target.value)}
-                    className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                    className="w-full rounded-md border-gray-300 shadow-sm focus:border-gray-300 focus:ring-gray-500"
                   >
                     <option value="">Use Default API Key</option>
                     {Array.isArray(apiKeys) && apiKeys.map((key) => (
@@ -199,14 +199,14 @@ export default function ExplorePage() {
 
         {/* API Statistics 
         {apiData && (
-          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200 p-6">
+          <div className="bg-gradient-to-r from-gray-50 to-indigo-50 rounded-lg border border-gray-200 p-6">
             <div className="flex items-center justify-between">
               <div>
                 <h2 className="text-xl font-bold text-gray-900">Top Ledger APIs</h2>
                 <p className="text-sm text-gray-600">Comprehensive analytics and data endpoints</p>
               </div>
               <div className="text-right">
-                <div className="text-2xl font-bold text-blue-600">{filteredApis.length}</div>
+                <div className="text-2xl font-bold text-gray-600">{filteredApis.length}</div>
                 <div className="text-sm text-gray-500">of {apiData.totalApis} APIs</div>
               </div>
             </div>
@@ -217,7 +217,7 @@ export default function ExplorePage() {
         <div className="space-y-4">
           {isLoading ? (
             <div className="text-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-600 mx-auto"></div>
               <p className="mt-2 text-gray-500">Loading APIs...</p>
             </div>
           ) : filteredApis.length === 0 ? (

@@ -16,7 +16,7 @@ const navigation = [
   { name: 'Explore APIs', href: '/', icon: HomeIcon },
   { name: 'API Keys', href: '/keys', icon: KeyIcon },
   //{ name: 'Usage & Billing history', href: '/usage', icon: ChartBarIcon },
-  { name: 'Settings', href: '/settings', icon: CogIcon },
+  //{ name: 'Settings', href: '/settings', icon: CogIcon },
   { name: 'Docs', href: '/docs', icon: DocumentTextIcon },
 ];
 

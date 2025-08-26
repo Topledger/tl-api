@@ -6,8 +6,8 @@
       "name": "Lokesh Tiwari",
       "plan": "Basic",
       "credits": {
-        "used": 23181,
-        "remaining": 20819,
+        "used": 23182,
+        "remaining": 20818,
         "total": 44000
       },
       "billingCycle": {
@@ -20,8 +20,8 @@
           "name": "Production API",
           "key": "BBohjJhtsyggedgavpjn",
           "createdAt": "2024-09-20",
-          "lastUsed": "2025-08-25",
-          "totalHits": 8738,
+          "lastUsed": "2025-08-26",
+          "totalHits": 8739,
           "dailyHits": [
             {
               "date": "2024-12-25",
@@ -46,6 +46,10 @@
             {
               "date": "2025-08-25",
               "hits": 8
+            },
+            {
+              "date": "2025-08-26",
+              "hits": 1
             }
           ]
         },
@@ -206,6 +210,10 @@
         {
           "date": "2025-08-25",
           "requests": 31
+        },
+        {
+          "date": "2025-08-26",
+          "requests": 1
         }
       ],
       "billingHistory": [
@@ -365,7 +373,7 @@
         "end": "2025-07-17"
       },
       "createdAt": "2025-06-17T14:25:47.342Z",
-      "lastLogin": "2025-08-25T11:10:36.447Z"
+      "lastLogin": "2025-08-26T07:18:57.531Z"
     },
     "tiwari2010iit_gmail_com": {
       "id": "111680292063135580990",
@@ -383,7 +391,7 @@
         "end": "2025-07-18"
       },
       "createdAt": "2025-06-18T07:09:45.582Z",
-      "lastLogin": "2025-08-25T13:21:25.699Z"
+      "lastLogin": "2025-08-26T06:46:27.585Z"
     }
   },
   "globalStats": {

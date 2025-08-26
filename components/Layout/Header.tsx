@@ -41,7 +41,7 @@ export default function Header({ title, breadcrumbs, onMenuClick }: HeaderProps)
           {onMenuClick && (
             <button
               type="button"
-              className="lg:hidden p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500"
+              className="lg:hidden p-2 rounded-md text-gray-400 hover:text-gray-300 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-gray-300"
               onClick={onMenuClick}
             >
               <Bars3Icon className="h-6 w-6" />
@@ -61,7 +61,7 @@ export default function Header({ title, breadcrumbs, onMenuClick }: HeaderProps)
                       {breadcrumb.href ? (
                         <a
                           href={breadcrumb.href}
-                          className="text-sm font-medium text-gray-500 hover:text-gray-700 transition-colors"
+                          className="text-sm font-medium text-gray-300 hover:text-gray-700 transition-colors"
                         >
                           {breadcrumb.label}
                         </a>
@@ -75,7 +75,7 @@ export default function Header({ title, breadcrumbs, onMenuClick }: HeaderProps)
                 </ol>
               </nav>
             ) : (
-              <h1 className="text-2xl font-bold text-gray-900">{title}</h1>
+              <h1 className="text-lg font-semibold text-gray-600">{title}</h1>
             )}
           </div>
 
@@ -91,7 +91,7 @@ export default function Header({ title, breadcrumbs, onMenuClick }: HeaderProps)
                       <span className="ml-1 font-semibold text-gray-900">
                         {displayUser.credits.remaining?.toLocaleString() || 0}
                       </span>
-                      <span className="text-gray-500">
+                      <span className="text-gray-300">
                         /{displayUser.credits.total?.toLocaleString() || 0}
                       </span>
                     </div>
@@ -102,8 +102,10 @@ export default function Header({ title, breadcrumbs, onMenuClick }: HeaderProps)
                 <div className="relative">
                   <button
                     type="button"
-                    className="flex items-center space-x-2 text-sm rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                    onClick={() => setShowDropdown(!showDropdown)}
+                    className="flex items-center space-x-2 text-sm rounded-full focus:outline-none focus:ring-offset-2 focus:ring-gray-300"
+                    //onClick={() => setShowDropdown(!showDropdown)}
+                    onMouseEnter={() => setShowDropdown(true)}
+                    
                   >
                     <img
                       className="h-8 w-8 rounded-full"
@@ -117,12 +119,14 @@ export default function Header({ title, breadcrumbs, onMenuClick }: HeaderProps)
                   </button>
 
                   {showDropdown && (
-                    <div className="absolute right-0 mt-2 w-48 rounded-md shadow-lg py-1 bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-50">
-                      <div className="px-4 py-2 text-sm text-gray-700 border-b border-gray-100">
+                    
+                    <div  onMouseLeave={() => setShowDropdown(false)} className="absolute right-0 mt-2 w-48 rounded-md shadow-lg py-1 bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-50">
+                      <div className="px-4 py-2 text-sm text-gray-700 border-b border-gray-200">
                         <p className="font-medium">{session.user?.name}</p>
                         <p className="text-gray-500">{session.user?.email}</p>
                       </div>
                       <button
+                        
                         onClick={handleSignOut}
                         className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                       >
@@ -135,7 +139,7 @@ export default function Header({ title, breadcrumbs, onMenuClick }: HeaderProps)
             ) : (
               <button
                 onClick={handleSignIn}
-                className="bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                className="bg-gray-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-300"
               >
                 Sign In
               </button>

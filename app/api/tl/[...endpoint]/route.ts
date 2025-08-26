@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import fs from 'fs';
 import path from 'path';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
+import { isS3Configured, getUserApiKeysFromS3, getApiDataFromS3 } from '@/lib/s3';
 
 interface ApiItem {
   endpoint: string;
@@ -19,105 +22,208 @@ interface ApiData {
   apis: ApiItem[];
 }
 
-// Load APIs data
-function getApisData(): ApiData {
+// Load APIs data with S3 support
+async function getApisData(): Promise<ApiData> {
+  if (isS3Configured()) {
+    try {
+      console.log('🔄 Loading API data from S3 for wrapper...');
+      return await getApiDataFromS3();
+    } catch (error) {
+      console.error('❌ Failed to load from S3, falling back to local file:', error);
+    }
+  }
+  
+  console.log('📁 Loading API data from local file for wrapper...');
   const apisPath = path.join(process.cwd(), 'public', 'apis_list.json');
   const fileData = fs.readFileSync(apisPath, 'utf8');
   return JSON.parse(fileData);
 }
 
-// Validate user API key
-async function validateUserApiKey(userApiKey: string): Promise<boolean> {
+// Validate user API key with authentication
+async function validateUserApiKey(userApiKey: string, request: NextRequest): Promise<{ isValid: boolean; userId?: string }> {
   try {
-    const dataPath = path.join(process.cwd(), 'data', 'users.json');
-    const fileData = fs.readFileSync(dataPath, 'utf8');
-    const data = JSON.parse(fileData);
-    
-    // Always use the default user data for now
-    const userData = data.users?.user_lokesh_tiwari;
-    
-    if (!userData || !Array.isArray(userData.apiKeys)) {
-      return false;
+    // Get authenticated user from session
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.email) {
+      console.log('❌ No authenticated session found');
+      return { isValid: false };
     }
 
-    // Check if the user API key exists
-    return userData.apiKeys.some((key: any) => key.key === userApiKey);
+    const userId = session.user.email.replace('@', '_').replace('.', '_');
+    console.log(`🔐 Validating API key for user: ${userId}`);
+
+    let apiKeys: any[] = [];
+
+    // Load user's API keys from S3 or local storage
+    if (isS3Configured()) {
+      try {
+        console.log('📡 Loading user API keys from S3 for validation...');
+        apiKeys = await getUserApiKeysFromS3(userId);
+      } catch (error) {
+        console.error('❌ Failed to load from S3, falling back to local storage:', error);
+        apiKeys = await getApiKeysFromLocal(userId);
+      }
+    } else {
+      console.log('📁 Loading user API keys from local storage for validation...');
+      apiKeys = await getApiKeysFromLocal(userId);
+    }
+
+    // Check if the provided API key belongs to this user
+    const isValid = apiKeys.some((key: any) => key.key === userApiKey);
+    
+    if (isValid) {
+      console.log(`✅ Valid API key found for user: ${userId}`);
+    } else {
+      console.log(`❌ Invalid API key for user: ${userId}, checked ${apiKeys.length} keys`);
+    }
+
+    return { isValid, userId: isValid ? userId : undefined };
   } catch (error) {
     console.error('Error validating API key:', error);
-    return false;
+    return { isValid: false };
   }
 }
 
-// Log API usage
-async function logApiUsage(userApiKey: string, apiId: string) {
+// Helper function to get API keys from local storage
+async function getApiKeysFromLocal(userId: string): Promise<any[]> {
   try {
     const dataPath = path.join(process.cwd(), 'data', 'users.json');
     const fileData = fs.readFileSync(dataPath, 'utf8');
     const data = JSON.parse(fileData);
     
-    const userData = data.users?.user_lokesh_tiwari;
-    if (!userData || !Array.isArray(userData.apiKeys)) {
-      return;
+    const userData = data.users?.[userId];
+    if (!userData || !userData.apiKeys) {
+      console.log(`📁 No local API keys found for user: ${userId}`);
+      return [];
     }
 
-    // Find the user's API key and increment usage
-    const keyIndex = userData.apiKeys.findIndex((key: any) => key.key === userApiKey);
+    console.log(`📁 Loaded ${userData.apiKeys.length} API keys from local storage for user: ${userId}`);
+    return userData.apiKeys;
+  } catch (error) {
+    console.error('Error reading local API keys:', error);
+    return [];
+  }
+}
+
+// Log API usage for authenticated user
+async function logApiUsage(userApiKey: string, apiId: string, userId: string) {
+  try {
+    console.log(`📊 Logging API usage for user: ${userId}, API: ${apiId}`);
+    
+    // Load user's current API keys
+    let apiKeys: any[] = [];
+    
+    if (isS3Configured()) {
+      try {
+        console.log('📡 Loading user API keys from S3 for usage logging...');
+        apiKeys = await getUserApiKeysFromS3(userId);
+      } catch (error) {
+        console.error('❌ Failed to load from S3 for logging, falling back to local storage:', error);
+        apiKeys = await getApiKeysFromLocal(userId);
+      }
+    } else {
+      console.log('📁 Loading user API keys from local storage for usage logging...');
+      apiKeys = await getApiKeysFromLocal(userId);
+    }
+
+    // Find and update the specific API key
+    const keyIndex = apiKeys.findIndex((key: any) => key.key === userApiKey);
     if (keyIndex !== -1) {
-      userData.apiKeys[keyIndex].totalHits = (userData.apiKeys[keyIndex].totalHits || 0) + 1;
-      userData.apiKeys[keyIndex].lastUsed = new Date().toISOString().split('T')[0];
+      const today = new Date().toISOString().split('T')[0];
+      
+      // Update key usage stats
+      apiKeys[keyIndex].totalHits = (apiKeys[keyIndex].totalHits || 0) + 1;
+      apiKeys[keyIndex].lastUsed = today;
       
       // Add to daily hits
-      const today = new Date().toISOString().split('T')[0];
-      if (!Array.isArray(userData.apiKeys[keyIndex].dailyHits)) {
-        userData.apiKeys[keyIndex].dailyHits = [];
+      if (!Array.isArray(apiKeys[keyIndex].dailyHits)) {
+        apiKeys[keyIndex].dailyHits = [];
       }
       
-      const todayHit = userData.apiKeys[keyIndex].dailyHits.find((hit: any) => hit.date === today);
+      const todayHit = apiKeys[keyIndex].dailyHits.find((hit: any) => hit.date === today);
       if (todayHit) {
         todayHit.hits++;
       } else {
-        userData.apiKeys[keyIndex].dailyHits.push({ date: today, hits: 1 });
+        apiKeys[keyIndex].dailyHits.push({ date: today, hits: 1 });
       }
-    }
 
-    // Update usage data
-    if (!Array.isArray(userData.usageData)) {
-      userData.usageData = [];
-    }
-    
-    const today = new Date().toISOString().split('T')[0];
-    const todayUsage = userData.usageData.find((usage: any) => usage.date === today);
-    if (todayUsage) {
-      todayUsage.requests++;
+      // Save updated API keys
+      if (isS3Configured()) {
+        try {
+          const { saveUserApiKeysToS3 } = await import('@/lib/s3');
+          console.log('📡 Saving updated API key usage to S3...');
+          await saveUserApiKeysToS3(userId, apiKeys);
+          console.log('✅ API usage logged to S3');
+        } catch (error) {
+          console.error('❌ Failed to save usage to S3, falling back to local storage:', error);
+          await saveApiKeysToLocal(userId, apiKeys);
+        }
+      } else {
+        console.log('📁 Saving updated API key usage to local storage...');
+        await saveApiKeysToLocal(userId, apiKeys);
+      }
     } else {
-      userData.usageData.push({ date: today, requests: 1 });
+      console.log(`⚠️ API key not found for usage logging: ${userApiKey}`);
     }
-
-    // Update credits
-    if (userData.credits) {
-      userData.credits.used = (userData.credits.used || 0) + 1;
-      userData.credits.remaining = Math.max(0, (userData.credits.remaining || 0) - 1);
-    }
-
-    // Write back to file
-    fs.writeFileSync(dataPath, JSON.stringify(data, null, 2));
   } catch (error) {
     console.error('Error logging API usage:', error);
   }
 }
 
+// Helper function to save API keys to local storage
+async function saveApiKeysToLocal(userId: string, apiKeys: any[]): Promise<void> {
+  try {
+    const dataPath = path.join(process.cwd(), 'data', 'users.json');
+    
+    // Read existing data or create new structure
+    let data: any = { users: {} };
+    try {
+      const fileData = fs.readFileSync(dataPath, 'utf8');
+      data = JSON.parse(fileData);
+    } catch (error) {
+      console.log('Creating new users.json file for usage logging');
+      // Create data directory if it doesn't exist
+      const dataDir = path.dirname(dataPath);
+      if (!fs.existsSync(dataDir)) {
+        fs.mkdirSync(dataDir, { recursive: true });
+      }
+    }
+
+    // Ensure users object exists
+    if (!data.users) {
+      data.users = {};
+    }
+
+    // Update user's API keys
+    if (!data.users[userId]) {
+      data.users[userId] = {};
+    }
+    
+    data.users[userId].apiKeys = apiKeys;
+    
+    // Write back to file
+    fs.writeFileSync(dataPath, JSON.stringify(data, null, 2));
+    console.log(`📁 Saved ${apiKeys.length} API keys with updated usage to local storage for user: ${userId}`);
+  } catch (error) {
+    console.error('Error saving local API keys with usage:', error);
+    throw error;
+  }
+}
+
 export async function GET(
   request: NextRequest,
-  { params }: { params: { endpoint: string[] } }
+  { params }: { params: Promise<{ endpoint: string[] }> }
 ) {
-  return handleRequest(request, params, 'GET');
+  const resolvedParams = await params;
+  return handleRequest(request, resolvedParams, 'GET');
 }
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { endpoint: string[] } }
+  { params }: { params: Promise<{ endpoint: string[] }> }
 ) {
-  return handleRequest(request, params, 'POST');
+  const resolvedParams = await params;
+  return handleRequest(request, resolvedParams, 'POST');
 }
 
 async function handleRequest(
@@ -137,17 +243,17 @@ async function handleRequest(
       );
     }
 
-    // Validate user API key
-    const isValidKey = await validateUserApiKey(userApiKey);
-    if (!isValidKey) {
+    // Validate user API key with authentication
+    const { isValid, userId } = await validateUserApiKey(userApiKey, request);
+    if (!isValid) {
       return NextResponse.json(
-        { error: 'Invalid API key' },
+        { error: 'Invalid API key or user not authenticated' },
         { status: 403 }
       );
     }
 
-    // Load APIs data
-    const apisData = getApisData();
+    // Load APIs data (now async)
+    const apisData = await getApisData();
     
     // Build the endpoint path from the dynamic route
     const endpointPath = '/' + endpoint.join('/');
@@ -165,8 +271,8 @@ async function handleRequest(
       );
     }
 
-    // Log API usage
-    await logApiUsage(userApiKey, matchingApi.endpoint);
+    // Log API usage for the authenticated user
+    await logApiUsage(userApiKey, matchingApi.endpoint, userId!);
 
     // Remove api_key from searchParams to avoid passing it to the target API
     searchParams.delete('api_key');

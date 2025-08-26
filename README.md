@@ -42,9 +42,53 @@ NEXTAUTH_SECRET=your-secret-key-here
 # Google OAuth Configuration
 GOOGLE_CLIENT_ID=your-google-client-id-here
 GOOGLE_CLIENT_SECRET=your-google-client-secret-here
+
+# AWS S3 Configuration (Optional - for dynamic API data loading)
+AWS_ACCESS_KEY_ID=your-aws-access-key-id
+AWS_SECRET_ACCESS_KEY=your-aws-secret-access-key
+AWS_REGION=us-east-1
+AWS_S3_BUCKET_NAME=your-s3-bucket-name
 ```
 
-### 4. Run the Development Server
+### 4. AWS S3 Configuration (Optional)
+
+The application can dynamically load API endpoint data from an S3 bucket instead of using the static `public/apis_list.json` file. This allows for real-time updates to the API catalog without redeploying the application.
+
+**Setup Steps:**
+
+1. **Create an S3 bucket** in your AWS account
+2. **Upload your API data** to `admin/api-data/api-data.json` in the bucket
+3. **Create IAM credentials** with S3 read access to your bucket
+4. **Add the AWS environment variables** to your `.env.local` file
+
+**Data Format:**
+The S3 file should follow the same structure as `public/apis_list.json`:
+
+```json
+{
+  "totalApis": 219,
+  "extractedAt": "2025-08-25T09:39:16.804Z",
+  "apis": [
+    {
+      "endpoint": "https://analytics.topledger.xyz/tl-research/api/queries/13448/results.json",
+      "apiKey": "enfT00LNZEyisrWZh1mcgCLaPvcddY6r4nqlyN5J",
+      "title": "Avg & Median Cu Price",
+      "subtitle": "Includes all non-vote transactions (successful and failed)",
+      "page": "compute-units",
+      "pageName": "Compute Units",
+      "menuId": "compute-units",
+      "menuName": "Compute Units"
+    }
+  ]
+}
+```
+
+**Fallback Behavior:**
+- If S3 is not configured, the app will use the local `public/apis_list.json` file
+- If S3 is configured but fails to load, it will automatically fall back to the local file
+- Check the console logs to see which data source is being used
+
+### 5. Run the Development Server
 
 ```bash
 npm run dev
