@@ -1,0 +1,307 @@
+'use client';
+
+import { useEffect, useState } from 'react';
+import { PlusIcon, TrashIcon, PencilIcon, EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
+import MainLayout from '@/components/Layout/MainLayout';
+import Button from '@/components/UI/Button';
+import Modal from '@/components/UI/Modal';
+import Input from '@/components/UI/Input';
+import { useAppStore } from '@/lib/store';
+import { formatDate } from '@/lib/utils';
+
+export default function ApiKeysPage() {
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [newKeyName, setNewKeyName] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [visibleKeys, setVisibleKeys] = useState<Set<string>>(new Set());
+  const [editingKey, setEditingKey] = useState<string | null>(null);
+  const [editName, setEditName] = useState('');
+
+  const { apiKeys, setApiKeys, addApiKey, deleteApiKey, updateApiKey } = useAppStore();
+
+  const loadApiKeys = async (retryCount = 0) => {
+    try {
+      const response = await fetch('/api/keys', {
+        method: 'GET',
+        headers: {
+          'Cache-Control': 'no-cache',
+        },
+      });
+      
+      if (!response.ok) {
+        // Retry once if it's a 500 error and we haven't retried yet
+        if (response.status === 500 && retryCount < 1) {
+          console.log('Retrying API call after 500 error...');
+          await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1 second
+          return loadApiKeys(retryCount + 1);
+        }
+        throw new Error(`Keys API failed: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      setApiKeys(Array.isArray(data) ? data : []);
+    } catch (error) {
+      console.error('Error loading API keys:', error);
+      // Set empty array on error to prevent map errors
+      setApiKeys([]);
+    }
+  };
+
+  useEffect(() => {
+    loadApiKeys();
+  }, []);
+
+  const handleCreateKey = async () => {
+    if (!newKeyName.trim()) return;
+
+    setIsLoading(true);
+    try {
+      const response = await fetch('/api/keys', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Cache-Control': 'no-cache',
+        },
+        body: JSON.stringify({ name: newKeyName }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        loadApiKeys(); // Reload the API keys list
+        setIsCreateModalOpen(false);
+        setNewKeyName('');
+      } else {
+        throw new Error(`Create API failed: ${response.status}`);
+      }
+    } catch (error) {
+      console.error('Error creating API key:', error);
+      alert('Failed to create API key. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleDeleteKey = async (keyId: string) => {
+    if (!confirm('Are you sure you want to delete this API key?')) return;
+
+    try {
+      const response = await fetch(`/api/keys?id=${keyId}`, {
+        method: 'DELETE',
+        headers: {
+          'Cache-Control': 'no-cache',
+        },
+      });
+
+      if (response.ok) {
+        loadApiKeys(); // Reload the API keys list
+      } else {
+        throw new Error(`Delete API failed: ${response.status}`);
+      }
+    } catch (error) {
+      console.error('Error deleting API key:', error);
+      alert('Failed to delete API key. Please try again.');
+    }
+  };
+
+  const handleUpdateKey = async (keyId: string, newName: string) => {
+    try {
+      const response = await fetch('/api/keys', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Cache-Control': 'no-cache',
+        },
+        body: JSON.stringify({ id: keyId, name: newName }),
+      });
+
+      if (response.ok) {
+        loadApiKeys(); // Reload the API keys list
+        setEditingKey(null);
+        setEditName('');
+      } else {
+        throw new Error(`Update API failed: ${response.status}`);
+      }
+    } catch (error) {
+      console.error('Error updating API key:', error);
+      alert('Failed to update API key. Please try again.');
+    }
+  };
+
+  const toggleKeyVisibility = (keyId: string) => {
+    const newVisibleKeys = new Set(visibleKeys);
+    if (newVisibleKeys.has(keyId)) {
+      newVisibleKeys.delete(keyId);
+    } else {
+      newVisibleKeys.add(keyId);
+    }
+    setVisibleKeys(newVisibleKeys);
+  };
+
+  const startEditing = (key: any) => {
+    setEditingKey(key.id);
+    setEditName(key.name);
+  };
+
+  const cancelEditing = () => {
+    setEditingKey(null);
+    setEditName('');
+  };
+
+  return (
+    <MainLayout title="API Keys">
+      <div className="space-y-6">
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-lg font-medium text-gray-900">API Keys</h2>
+            <p className="text-sm text-gray-500">
+              Ideal for testing Ideal for testingIdeal for testingIdeal for testingIdeal for testing Ideal for testing Ideal for testing
+            </p>
+          </div>
+          <Button onClick={() => setIsCreateModalOpen(true)}>
+            <PlusIcon className="h-4 w-4 mr-2" />
+            Generate New Key
+          </Button>
+        </div>
+
+        {/* API Keys Table */}
+        <div className="bg-white shadow-sm border border-gray-200 rounded-lg overflow-hidden">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Key Name
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Key ID
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Created at
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Actions
+                </th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {apiKeys.map((key) => (
+                <tr key={key.id} className="hover:bg-gray-50">
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    {editingKey === key.id ? (
+                      <div className="flex items-center space-x-2">
+                        <input
+                          type="text"
+                          value={editName}
+                          onChange={(e) => setEditName(e.target.value)}
+                          className="text-sm text-gray-900 border border-gray-300 rounded px-2 py-1"
+                          onKeyPress={(e) => {
+                            if (e.key === 'Enter') {
+                              handleUpdateKey(key.id, editName);
+                            }
+                            if (e.key === 'Escape') {
+                              cancelEditing();
+                            }
+                          }}
+                          autoFocus
+                        />
+                        <button
+                          onClick={() => handleUpdateKey(key.id, editName)}
+                          className="text-green-600 hover:text-green-700"
+                        >
+                          ✓
+                        </button>
+                        <button
+                          onClick={cancelEditing}
+                          className="text-red-600 hover:text-red-700"
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="flex items-center space-x-2">
+                        <span className="text-sm text-gray-900">{key.name}</span>
+                        <button
+                          onClick={() => startEditing(key)}
+                          className="text-gray-400 hover:text-gray-600"
+                        >
+                          <PencilIcon className="h-4 w-4" />
+                        </button>
+                      </div>
+                    )}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="flex items-center space-x-2">
+                      <code className="text-sm text-gray-600 font-mono">
+                        {visibleKeys.has(key.id) ? key.key : '••••••••••••••••••••••••••••••••••••'}
+                      </code>
+                      <button
+                        onClick={() => toggleKeyVisibility(key.id)}
+                        className="text-gray-400 hover:text-gray-600"
+                      >
+                        {visibleKeys.has(key.id) ? (
+                          <EyeSlashIcon className="h-4 w-4" />
+                        ) : (
+                          <EyeIcon className="h-4 w-4" />
+                        )}
+                      </button>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {formatDate(key.createdAt)}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                    <div className="flex items-center space-x-2">
+                      <button
+                        onClick={() => handleDeleteKey(key.id)}
+                        className="text-red-600 hover:text-red-700"
+                      >
+                        <TrashIcon className="h-4 w-4" />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+
+          {apiKeys.length === 0 && (
+            <div className="text-center py-8">
+              <p className="text-gray-500">No API keys found. Create your first key to get started.</p>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Create Key Modal */}
+      <Modal
+        isOpen={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
+        title="Generate New API Key"
+      >
+        <div className="space-y-4">
+          <Input
+            label="Key Name"
+            value={newKeyName}
+            onChange={(e) => setNewKeyName(e.target.value)}
+            placeholder="Enter a descriptive name for this key"
+          />
+          <div className="flex justify-end space-x-3">
+            <Button
+              variant="outline"
+              onClick={() => setIsCreateModalOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleCreateKey}
+              isLoading={isLoading}
+              disabled={!newKeyName.trim()}
+            >
+              Generate Key
+            </Button>
+          </div>
+        </div>
+      </Modal>
+    </MainLayout>
+  );
+} 

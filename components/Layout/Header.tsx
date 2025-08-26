@@ -1,0 +1,148 @@
+'use client';
+
+import { useState } from 'react';
+import { useSession, signOut } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
+import { ChevronDownIcon, ChevronRightIcon, Bars3Icon } from '@heroicons/react/24/outline';
+import { useAppStore } from '@/lib/store';
+
+interface BreadcrumbItem {
+  label: string;
+  href?: string;
+}
+
+interface HeaderProps {
+  title?: string;
+  breadcrumbs?: BreadcrumbItem[];
+  onMenuClick?: () => void;
+}
+
+export default function Header({ title, breadcrumbs, onMenuClick }: HeaderProps) {
+  const [showDropdown, setShowDropdown] = useState(false);
+  const { data: session } = useSession();
+  const router = useRouter();
+  const { user } = useAppStore();
+
+  const handleSignOut = async () => {
+    await signOut({ callbackUrl: '/auth/signin' });
+  };
+
+  const handleSignIn = () => {
+    router.push('/auth/signin');
+  };
+
+  const displayUser = session?.user || user;
+
+  return (
+    <header className="bg-white border-b border-gray-200">
+      <div className="px-6 py-4">
+        <div className="flex items-center justify-between">
+          {/* Mobile menu button */}
+          {onMenuClick && (
+            <button
+              type="button"
+              className="lg:hidden p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500"
+              onClick={onMenuClick}
+            >
+              <Bars3Icon className="h-6 w-6" />
+            </button>
+          )}
+          
+          {/* Title or Breadcrumbs */}
+          <div className="flex-1">
+            {breadcrumbs && breadcrumbs.length > 0 ? (
+              <nav className="flex" aria-label="Breadcrumb">
+                <ol className="flex items-center space-x-2">
+                  {breadcrumbs.map((breadcrumb, index) => (
+                    <li key={index} className="flex items-center">
+                      {index > 0 && (
+                        <ChevronRightIcon className="h-4 w-4 text-gray-400 mx-2" />
+                      )}
+                      {breadcrumb.href ? (
+                        <a
+                          href={breadcrumb.href}
+                          className="text-sm font-medium text-gray-500 hover:text-gray-700 transition-colors"
+                        >
+                          {breadcrumb.label}
+                        </a>
+                      ) : (
+                        <span className="text-sm font-medium text-gray-900">
+                          {breadcrumb.label}
+                        </span>
+                      )}
+                    </li>
+                  ))}
+                </ol>
+              </nav>
+            ) : (
+              <h1 className="text-2xl font-bold text-gray-900">{title}</h1>
+            )}
+          </div>
+
+          {/* User Info and Credits */}
+          <div className="flex items-center space-x-4">
+            {session ? (
+              <>
+                {/* Credits Display 
+                {displayUser?.credits && (
+                  <div className="hidden sm:flex items-center space-x-2 bg-gray-50 px-3 py-2 rounded-lg">
+                    <div className="text-sm">
+                      <span className="text-gray-600">Credits:</span>
+                      <span className="ml-1 font-semibold text-gray-900">
+                        {displayUser.credits.remaining?.toLocaleString() || 0}
+                      </span>
+                      <span className="text-gray-500">
+                        /{displayUser.credits.total?.toLocaleString() || 0}
+                      </span>
+                    </div>
+                  </div>
+                )}*/}
+
+                {/* User Dropdown */}
+                <div className="relative">
+                  <button
+                    type="button"
+                    className="flex items-center space-x-2 text-sm rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                    onClick={() => setShowDropdown(!showDropdown)}
+                  >
+                    <img
+                      className="h-8 w-8 rounded-full"
+                      src={session.user?.image || '/default-avatar.png'}
+                      alt="User avatar"
+                    />
+                    <span className="hidden sm:block font-medium text-gray-700">
+                      {session.user?.name}
+                    </span>
+                    <ChevronDownIcon className="h-4 w-4 text-gray-400" />
+                  </button>
+
+                  {showDropdown && (
+                    <div className="absolute right-0 mt-2 w-48 rounded-md shadow-lg py-1 bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-50">
+                      <div className="px-4 py-2 text-sm text-gray-700 border-b border-gray-100">
+                        <p className="font-medium">{session.user?.name}</p>
+                        <p className="text-gray-500">{session.user?.email}</p>
+                      </div>
+                      <button
+                        onClick={handleSignOut}
+                        className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      >
+                        Sign out
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </>
+            ) : (
+              <button
+                onClick={handleSignIn}
+                className="bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              >
+                Sign In
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+    </header>
+  );
+} 
