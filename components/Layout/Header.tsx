@@ -34,7 +34,7 @@ export default function Header({ title, breadcrumbs, onMenuClick }: HeaderProps)
   const displayUser = session?.user || user;
 
   return (
-    <header className="bg-white border-b border-gray-200">
+    <header className="bg-gray-50 border-b border-gray-200">
       <div className="px-6 py-4">
         <div className="flex items-center justify-between">
           {/* Mobile menu button */}

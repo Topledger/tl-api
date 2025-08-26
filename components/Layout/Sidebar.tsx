@@ -45,14 +45,14 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
       )}>
         <div className="flex flex-col h-full">
           {/* Header */}
-          <div className="flex items-center justify-between px-4 py-6 border-b border-gray-200 flex-shrink-0">
-            <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-sm">TL</span>
-              </div>
-              <div>
-                <div className="font-semibold text-gray-900">Top Ledger</div>
-              </div>
+          <div className="flex items-center px-4 py-4 border-b border-gray-200 flex-shrink-0">
+            <div className="flex items-center">
+              <img 
+                src="https://topledger.xyz/assets/images/logo/topledger-full.svg?imwidth=384"
+                alt="Top Ledger Logo"
+                className="h-8 w-auto"
+              />
+              
             </div>
             <button
               onClick={onClose}
