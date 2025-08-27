@@ -58,7 +58,7 @@ export default function SettingsPage() {
           </div>
           
           <div className="flex items-center space-x-2 text-sm text-gray-600">
-            <svg className="w-4 h-4 text-google-blue" viewBox="0 0 24 24" fill="currentColor">
+            <svg className="w-4 h-4 text-google-gray" viewBox="0 0 24 24" fill="currentColor">
               <path d="M12.017 11.215c.026-.012.053-.027.081-.042l5.516-2.847c.403-.208.403-.777 0-.985l-5.516-2.847c-.323-.167-.726-.167-1.049 0l-5.516 2.847c-.403.208-.403.777 0 .985l5.516 2.847c.028.015.055.03.081.042zm-.081-1.06l-4.468-2.303 4.468-2.303c.108-.056.243-.056.351 0l4.468 2.303-4.468 2.303c-.108.056-.243.056-.351 0z"/>
               <path d="M6.036 12.75l5.947 3.067c.324.167.727.167 1.051 0l5.947-3.067c.329-.17.329-.66 0-.83-.329-.17-.727-.17-1.051 0l-5.947 3.067-5.947-3.067c-.324-.17-.722-.17-1.051 0-.329.17-.329.66 0 .83z"/>
               <path d="M6.036 16.75l5.947 3.067c.324.167.727.167 1.051 0l5.947-3.067c.329-.17.329-.66 0-.83-.329-.17-.727-.17-1.051 0l-5.947 3.067-5.947-3.067c-.324-.17-.722-.17-1.051 0-.329.17-.329.66 0 .83z"/>
@@ -118,7 +118,7 @@ export default function SettingsPage() {
                     checked={emailNotifications[key as keyof typeof emailNotifications]}
                     onChange={(e) => handleNotificationChange(key, e.target.checked)}
                   />
-                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-gray-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-gray-600"></div>
                 </label>
               </div>
             ))}

@@ -81,7 +81,7 @@ export default function ApiDetailsPage() {
     return (
       <MainLayout title="Loading API Details...">
         <div className="text-center py-8">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-600 mx-auto"></div>
           <p className="mt-2 text-gray-500">Loading API details...</p>
         </div>
       </MainLayout>
@@ -119,7 +119,7 @@ export default function ApiDetailsPage() {
             <div className="flex items-center space-x-4 text-sm">
               <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${
                 apiEndpoint.method === 'GET' ? 'bg-green-100 text-green-800' :
-                apiEndpoint.method === 'POST' ? 'bg-blue-100 text-blue-800' :
+                apiEndpoint.method === 'POST' ? 'bg-gray-100 text-gray-800' :
                 apiEndpoint.method === 'PUT' ? 'bg-yellow-100 text-yellow-800' :
                 'bg-red-100 text-red-800'
               }`}>
@@ -151,15 +151,15 @@ export default function ApiDetailsPage() {
             <h3 className="text-sm font-medium text-gray-500 mb-6">Network Usage</h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               <div className="text-center">
-                <div className="text-3xl font-bold text-blue-600 mb-1">19,000</div>
+                <div className="text-3xl font-bold text-gray-600 mb-1">19,000</div>
                 <div className="text-sm text-gray-500">Total Requests</div>
               </div>
               <div className="text-center">
-                <div className="text-3xl font-bold text-blue-600 mb-1">19,000</div>
+                <div className="text-3xl font-bold text-gray-600 mb-1">19,000</div>
                 <div className="text-sm text-gray-500">Avg Req/Sec</div>
               </div>
               <div className="text-center">
-                <div className="text-3xl font-bold text-blue-600 mb-1">19,000</div>
+                <div className="text-3xl font-bold text-gray-600 mb-1">19,000</div>
                 <div className="text-sm text-gray-500">Cached Requests</div>
               </div>
             </div>
@@ -251,7 +251,7 @@ export default function ApiDetailsPage() {
               <h4 className="text-sm font-medium text-gray-500 mb-2">Method</h4>
               <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
                 apiEndpoint.method === 'GET' ? 'bg-green-100 text-green-800' :
-                apiEndpoint.method === 'POST' ? 'bg-blue-100 text-blue-800' :
+                apiEndpoint.method === 'POST' ? 'bg-gray-100 text-gray-800' :
                 apiEndpoint.method === 'PUT' ? 'bg-yellow-100 text-yellow-800' :
                 'bg-red-100 text-red-800'
               }`}>

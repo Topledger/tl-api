@@ -46,9 +46,9 @@ Usage Examples
 
 ### Tab Features
 1. **Active State Indicators**:
-   - Blue text color for active tab
+   - gray text color for active tab
    - White background for active tab
-   - Blue bottom border (0.5px height)
+   - gray bottom border (0.5px height)
    - Smooth transitions
 
 2. **Interactive Design**:

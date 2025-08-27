@@ -63,7 +63,7 @@ export default function UsagePage() {
     return (
       <MainLayout title="Usage & Billing History">
         <div className="text-center py-8">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-600 mx-auto"></div>
           <p className="mt-2 text-gray-500">Loading usage data...</p>
         </div>
       </MainLayout>
@@ -95,7 +95,7 @@ export default function UsagePage() {
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-lg font-medium text-gray-900">Usage Chart</h3>
-            <select className="rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+            <select className="rounded-md border-gray-300 shadow-sm focus:border-gray-500 focus:ring-gray-500">
               <option>All APIs</option>
               <option>Authentication API</option>
               <option>Payment API</option>

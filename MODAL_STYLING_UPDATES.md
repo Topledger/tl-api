@@ -124,7 +124,7 @@ Usage Examples                Sample Response
 - **Borders**: Light gray (`#E5E7EB`)
 - **Background**: Light gray (`#F3F4F6`)  
 - **Text**: Dark gray (`#374151`)
-- **Active Tabs**: Blue accent (`#2563EB`)
+- **Active Tabs**: gray accent (`#2563EB`)
 - **Code**: Monospace font for better readability
 
 The modal now provides a perfectly balanced, visually consistent interface for API documentation! 🎨

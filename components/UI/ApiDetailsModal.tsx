@@ -61,13 +61,13 @@ print(data)`
             onClick={() => setActiveTab(tab.id)}
             className={`flex-1 px-4 py-3 text-sm font-medium transition-all duration-200 relative ${
               activeTab === tab.id
-                ? 'bg-white text-blue-600 shadow-sm'
+                ? 'bg-white text-gray-600 shadow-sm'
                 : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
             }`}
           >
             {tab.label}
             {activeTab === tab.id && (
-              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600"></div>
+              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gray-600"></div>
             )}
           </button>
         ))}

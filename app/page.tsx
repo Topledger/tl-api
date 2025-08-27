@@ -1,9 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { MagnifyingGlassIcon, DocumentDuplicateIcon, FunnelIcon } from '@heroicons/react/24/outline';
+import { MagnifyingGlassIcon, DocumentDuplicateIcon, FunnelIcon, ChevronDownIcon } from '@heroicons/react/24/outline';
 import MainLayout from '@/components/Layout/MainLayout';
 import Button from '@/components/UI/Button';
+import Dropdown from '@/components/UI/Dropdown';
 import ApiDetailsModal from '@/components/UI/ApiDetailsModal';
 import { copyToClipboard } from '@/lib/utils';
 
@@ -37,9 +38,24 @@ export default function ExplorePage() {
   const [pageNames, setPageNames] = useState<string[]>([]);
   const [selectedApi, setSelectedApi] = useState<ApiItem | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [showApiKeyDropdown, setShowApiKeyDropdown] = useState(false);
 
   useEffect(() => {
     loadData();
+  }, []);
+
+  // Close API key dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (!(event.target as Element).closest('.dropdown-container')) {
+        setShowApiKeyDropdown(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
   }, []);
 
   const loadData = async () => {
@@ -121,11 +137,27 @@ export default function ExplorePage() {
     ? [...new Set(apiData?.apis?.filter(api => api.menuName === selectedMenuName).map(api => api.pageName) || [])].sort()
     : pageNames;
 
+  // Prepare dropdown options
+  const categoryOptions = [
+    { value: '', label: 'All Categories' },
+    ...menuNames.map(name => ({ value: name, label: name }))
+  ];
+
+  const pageOptions = [
+    { value: '', label: 'All Subcategories' },
+    ...availablePageNames.map(name => ({ value: name, label: name }))
+  ];
+
+  const apiKeyOptions = [
+    { value: '', label: 'Use Default API Key' },
+    ...(Array.isArray(apiKeys) ? apiKeys.map(key => ({ value: key.id, label: key.name })) : [])
+  ];
+
   return (
     <MainLayout title="Top Ledger APIs">
       <div className="space-y-6">
         {/* Search and Filters */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <div className="bg-white rounded-lg shadow-sm border border-gray-100 py-1 px-4">
           <div className="space-y-4">
             
             
@@ -139,58 +171,76 @@ export default function ExplorePage() {
                 placeholder="Search APIs by title, description, or category..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 w-full rounded-md border-gray-300 shadow-sm focus:border-gray-300 focus:ring-gray-500"
+                className="pl-10 w-full text-sm rounded-sm border-gray-300 py-2"
               />
             </div>
               
               <div className="flex flex-wrap gap-4 flex-1">
-                <div className="max-w-[200px] flex-1">
-                  <select
-                    value={selectedMenuName}
-                    onChange={(e) => {
-                      setSelectedMenuName(e.target.value);
-                      setSelectedPageName(''); // Reset page filter when menu changes
-                    }}
-                    className="w-full rounded-md border-gray-300 shadow-sm focus:border-gray-300 focus:ring-gray-500"
-                  >
-                    <option value="">All Categories</option>
-                    {menuNames.map((menuName) => (
-                      <option key={menuName} value={menuName}>
-                        {menuName}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+                <Dropdown
+                  options={categoryOptions}
+                  value={selectedMenuName}
+                  onChange={(value) => {
+                    setSelectedMenuName(value);
+                    setSelectedPageName(''); // Reset page filter when menu changes
+                  }}
+                  placeholder="All Categories"
+                  className="max-w-[200px] flex-1"
+                />
                 
-                <div className="max-w-[200px] flex-1">
-                  <select
-                    value={selectedPageName}
-                    onChange={(e) => setSelectedPageName(e.target.value)}
-                    className="w-full rounded-md border-gray-300 shadow-sm focus:border-gray-300 focus:ring-gray-500"
-                    disabled={!!selectedMenuName && availablePageNames.length === 0}
-                  >
-                    <option value="">All Pages</option>
-                    {availablePageNames.map((pageName) => (
-                      <option key={pageName} value={pageName}>
-                        {pageName}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+                <Dropdown
+                  options={pageOptions}
+                  value={selectedPageName}
+                  onChange={setSelectedPageName}
+                  placeholder={!selectedMenuName ? "Select Category First" : "All Subcategories"}
+                  disabled={!selectedMenuName}
+                  className="max-w-[200px] flex-1"
+                />
 
-                <div className="max-w-[200px] flex-1">
-                  <select
-                    value={selectedApiKey}
-                    onChange={(e) => setSelectedApiKey(e.target.value)}
-                    className="w-full rounded-md border-gray-300 shadow-sm focus:border-gray-300 focus:ring-gray-500"
-                  >
-                    <option value="">Use Default API Key</option>
-                    {Array.isArray(apiKeys) && apiKeys.map((key) => (
-                      <option key={key.id} value={key.id}>
-                        {key.name}
-                      </option>
-                    ))}
-                  </select>
+
+                <div className="max-w-[200px] flex-1 relative dropdown-container">
+                  <div className="flex bg-white border border-gray-200 rounded-sm transition-shadow duration-200 overflow-hidden">
+                    {/* Left section - Key label */}
+                    <div className="bg-gradient-to-r from-gray-50 to-gray-100 border-r border-gray-200 px-3 py-2 flex items-center">
+                      <span className="text-xs font-normal text-gray-500 tracking-wider">KEY</span>
+                    </div>
+                    {/* Right section - Dropdown area */}
+                    <button
+                      type="button"
+                      className="flex-1 py-2 px-3 text-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-inset flex items-center justify-between group"
+                      onClick={() => setShowApiKeyDropdown(!showApiKeyDropdown)}
+                    >
+                      <span className={`truncate ${!selectedApiKey ? 'text-gray-400' : ''}`}>
+                        {selectedApiKey 
+                          ? Array.isArray(apiKeys) && apiKeys.find(key => key.id === selectedApiKey)?.name 
+                          : 'Select API key'
+                        }
+                      </span>
+                      <ChevronDownIcon className={`h-4 w-4 text-gray-400 ml-2 flex-shrink-0 transition-transform duration-200 ${showApiKeyDropdown ? 'rotate-180' : ''} group-hover:text-gray-600`} />
+                    </button>
+                  </div>
+                  
+                  {showApiKeyDropdown && (
+                    <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-md shadow-xl border border-gray-200 py-1 focus:outline-none z-50 max-h-60 overflow-auto">
+                      
+                     
+                      {Array.isArray(apiKeys) && apiKeys.map((key) => (
+                        <button
+                          key={key.id}
+                          type="button"
+                          className="block w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors duration-150"
+                          onClick={() => {
+                            setSelectedApiKey(key.id);
+                            setShowApiKeyDropdown(false);
+                          }}
+                        >
+                          <span className="font-medium">{key.name}</span>
+                          {key.description && (
+                            <span className="block text-xs text-gray-500 mt-0.5">{key.description}</span>
+                          )}
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

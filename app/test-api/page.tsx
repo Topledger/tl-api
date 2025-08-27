@@ -145,14 +145,14 @@ export default function TestApiPage() {
           </div>
         </div>
 
-        <div className="bg-blue-50 rounded-lg p-6">
-          <h3 className="text-lg font-medium text-blue-900 mb-2">API Endpoints</h3>
-          <div className="space-y-2 text-sm text-blue-800">
+        <div className="bg-gray-50 rounded-lg p-6">
+          <h3 className="text-lg font-medium text-gray-900 mb-2">API Endpoints</h3>
+          <div className="space-y-2 text-sm text-gray-800">
             <p><strong>Instruction API:</strong> POST /api/instruction</p>
             <p><strong>Discriminator API:</strong> POST /api/discriminator</p>
             <p><strong>Verify IDL API:</strong> POST /api/verify-idl</p>
           </div>
-          <p className="text-sm text-blue-700 mt-4">
+          <p className="text-sm text-gray-700 mt-4">
             These endpoints proxy requests to the actual Top Ledger APIs at apis.topledger.xyz
           </p>
         </div>
