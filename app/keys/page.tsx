@@ -153,7 +153,7 @@ export default function ApiKeysPage() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-lg font-medium text-gray-900">API Keys</h2>
+            
             <p className="text-sm text-gray-500">
               Ideal for testing Ideal for testingIdeal for testingIdeal for testingIdeal for testing Ideal for testing Ideal for testing
             </p>
@@ -165,7 +165,7 @@ export default function ApiKeysPage() {
         </div>
 
         {/* API Keys Table */}
-        <div className="bg-white shadow-sm border border-gray-200 rounded-lg overflow-hidden">
+        <div className="bg-white border border-gray-200 rounded-sm overflow-hidden">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>

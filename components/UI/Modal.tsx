@@ -36,7 +36,7 @@ const Modal: React.FC<ModalProps> = ({
         />
         
         {/* Modal */}
-        <div className={`relative bg-white rounded-lg shadow-xl ${sizeClasses[size]} w-full max-h-[90vh] overflow-hidden`}>
+        <div className={`relative bg-white rounded-sm shadow-xl ${sizeClasses[size]} w-full max-h-[90vh] overflow-hidden`}>
           {/* Header */}
           <div className="flex items-start justify-between p-6 border-b border-gray-200">
             <div className="flex-1 pr-4">

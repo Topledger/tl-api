@@ -63,7 +63,7 @@ export default function Dropdown({
       </button>
       
       {isOpen && !disabled && (
-        <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-md shadow-xl border border-gray-200 py-1 focus:outline-none z-50 max-h-60 overflow-auto">
+        <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-sm shadow-md border border-gray-200 py-1 focus:outline-none z-50 max-h-60 overflow-auto">
           {options.map((option) => (
             <button
               key={option.value}

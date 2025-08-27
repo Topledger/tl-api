@@ -39,6 +39,8 @@ export default function ExplorePage() {
   const [selectedApi, setSelectedApi] = useState<ApiItem | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [showApiKeyDropdown, setShowApiKeyDropdown] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 20;
 
   useEffect(() => {
     loadData();
@@ -132,6 +134,12 @@ export default function ExplorePage() {
     return matchesSearch && matchesMenuName && matchesPageName;
   }) : [];
 
+  // Pagination logic
+  const totalPages = Math.ceil(filteredApis.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedApis = filteredApis.slice(startIndex, endIndex);
+
   // Get available page names for selected menu (for dependent filtering)
   const availablePageNames = selectedMenuName 
     ? [...new Set(apiData?.apis?.filter(api => api.menuName === selectedMenuName).map(api => api.pageName) || [])].sort()
@@ -157,21 +165,24 @@ export default function ExplorePage() {
     <MainLayout title="Top Ledger APIs">
       <div className="space-y-6">
         {/* Search and Filters */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-100 py-1 px-4">
+        <div className="bg-white rounded-sm border border-gray-200 py-1 pl-2 pr-2">
           <div className="space-y-4">
             
             
             {/* All Filters in One Line */}
             <div className="flex flex-wrap items-center gap-4">
               {/* Search Bar */}
-            <div className="relative max-w-[500px] flex-1">
+            <div className="relative max-w-[526px] flex-1">
               <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
               <input
                 type="text"
                 placeholder="Search APIs by title, description, or category..."
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 w-full text-sm rounded-sm border-gray-300 py-2"
+                onChange={(e) => {
+                  setSearchTerm(e.target.value);
+                  setCurrentPage(1); // Reset to first page when searching
+                }}
+                className="pl-10 w-full text-sm rounded-sm border-black py-2 focus:outline-none"
               />
             </div>
               
@@ -182,6 +193,7 @@ export default function ExplorePage() {
                   onChange={(value) => {
                     setSelectedMenuName(value);
                     setSelectedPageName(''); // Reset page filter when menu changes
+                    setCurrentPage(1); // Reset to first page
                   }}
                   placeholder="All Categories"
                   className="max-w-[200px] flex-1"
@@ -190,7 +202,10 @@ export default function ExplorePage() {
                 <Dropdown
                   options={pageOptions}
                   value={selectedPageName}
-                  onChange={setSelectedPageName}
+                  onChange={(value) => {
+                    setSelectedPageName(value);
+                    setCurrentPage(1); // Reset to first page
+                  }}
                   placeholder={!selectedMenuName ? "Select Category First" : "All Subcategories"}
                   disabled={!selectedMenuName}
                   className="max-w-[200px] flex-1"
@@ -220,7 +235,7 @@ export default function ExplorePage() {
                   </div>
                   
                   {showApiKeyDropdown && (
-                    <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-md shadow-xl border border-gray-200 py-1 focus:outline-none z-50 max-h-60 overflow-auto">
+                    <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-sm shadow-md border border-gray-200 py-1 focus:outline-none z-50 max-h-60 overflow-auto">
                       
                      
                       {Array.isArray(apiKeys) && apiKeys.map((key) => (
@@ -266,8 +281,8 @@ export default function ExplorePage() {
         {/* API Endpoints List */}
         <div className="space-y-4">
           {isLoading ? (
-            <div className="text-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-600 mx-auto"></div>
+            <div className="flex flex-col items-center justify-center min-h-[60vh]">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-400"></div>
               <p className="mt-2 text-gray-500">Loading APIs...</p>
             </div>
           ) : filteredApis.length === 0 ? (
@@ -277,23 +292,23 @@ export default function ExplorePage() {
               </p>
             </div>
           ) : (
-            filteredApis.map((api, index) => (
+            paginatedApis.map((api, index) => (
               <div
                 key={`${api.id}-${index}`}
-                className="bg-white rounded-lg shadow-sm border border-gray-200 py-4 px-6 hover:shadow-md transition-shadow"
+                className="bg-white rounded-sm border border-gray-200 py-4 px-6"
               >
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     <div className="flex items-start space-x-3 mb-0">
                       <div className="flex-1">
-                        <h3 className="text-lg font-semibold text-gray-900 mb-1">
+                        <h3 className="text-md font-medium text-gray-900 mb-1">
                           {api.title}
                         </h3>
                         
                       </div>
                     </div>
                     {api.subtitle && (
-                      <p className="text-gray-600 mb-3">{api.subtitle}</p>
+                      <p className="text-gray-600 text-sm mb-3">{api.subtitle}</p>
                     )}
                     
                   </div>
@@ -318,6 +333,36 @@ export default function ExplorePage() {
                 </div>
               </div>
             ))
+          )}
+          
+          {/* Pagination Controls */}
+          {filteredApis.length > itemsPerPage && (
+            <div className="flex items-center justify-between py-4">
+              <div className="text-sm text-gray-500">
+                Showing {startIndex + 1} to {Math.min(endIndex, filteredApis.length)} of {filteredApis.length} results
+              </div>
+              <div className="flex items-center space-x-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                  disabled={currentPage === 1}
+                >
+                  Previous
+                </Button>
+                <span className="text-sm text-gray-600">
+                  Page {currentPage} of {totalPages}
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                  disabled={currentPage === totalPages}
+                >
+                  Next
+                </Button>
+              </div>
+            </div>
           )}
         </div>
     </div>

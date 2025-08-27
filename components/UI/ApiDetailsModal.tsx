@@ -52,22 +52,22 @@ print(data)`
   ];
 
   return (
-    <div className="border border-gray-200 rounded-lg overflow-hidden h-80">
+    <div className="border border-gray-200 rounded-sm overflow-hidden h-80">
       {/* Tab Headers */}
-      <div className="flex border-b border-gray-200 bg-gray-50">
+      <div className="flex border-b border-gray-200 bg-blue-50/50 rounded-sm">
         {tabs.map((tab) => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
             className={`flex-1 px-4 py-3 text-sm font-medium transition-all duration-200 relative ${
               activeTab === tab.id
-                ? 'bg-white text-gray-600 shadow-sm'
-                : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                ? 'bg-blue-50 text-blue-500 shadow-sm'
+                : 'text-gray-600 hover:text-gray-900 hover:bg-blue-50/70'
             }`}
           >
             {tab.label}
             {activeTab === tab.id && (
-              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gray-600"></div>
+              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-500"></div>
             )}
           </button>
         ))}
@@ -178,7 +178,7 @@ const ApiDetailsModal: React.FC<ApiDetailsModalProps> = ({
         <div>
           <div className="flex items-center gap-3">
             <h3 className="text-lg font-semibold text-gray-900">{api.title}</h3>
-            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+            <span className="inline-flex items-center px-2.5 py-0.5 rounded-sm text-xs font-medium bg-green-100 text-green-800">
               {api.method}
             </span>
           </div>
@@ -195,7 +195,7 @@ const ApiDetailsModal: React.FC<ApiDetailsModalProps> = ({
         <div>
           <h4 className="font-semibold text-gray-900 mb-3">API Endpoint</h4>
           <div className="relative">
-            <code className="block bg-gray-900 text-green-400 p-4 rounded-lg text-sm overflow-x-auto">
+            <code className="block bg-gray-900 text-green-400 p-4 rounded-sm text-sm overflow-x-auto">
               {fullEndpointUrl}
             </code>
             <Button
@@ -226,7 +226,7 @@ const ApiDetailsModal: React.FC<ApiDetailsModalProps> = ({
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Usage Examples */}
           <div>
-            <h4 className="font-semibold text-gray-900 mb-3">Usage Examples</h4>
+            <h4 className="font-medium text-sm text-gray-600 mb-3">Usage Examples</h4>
             
             <UsageExamplesTabs 
               curlExample={curlExample}
@@ -237,9 +237,9 @@ const ApiDetailsModal: React.FC<ApiDetailsModalProps> = ({
 
           {/* Sample Response */}
           <div>
-            <h4 className="font-semibold text-gray-900 mb-3">Response snippet</h4>
+            <h4 className="font-medium text-sm text-gray-600 mb-3">Response snippet</h4>
             
-            <div className="border border-gray-200 rounded-lg overflow-hidden h-80">
+            <div className="border border-gray-200 rounded-sm overflow-hidden h-80">
               <div className="bg-gray-100 h-full flex flex-col">
                 <div className="flex-1 overflow-y-auto">
                   <code className="block p-4 text-sm overflow-x-auto whitespace-pre font-mono">
