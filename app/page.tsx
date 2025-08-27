@@ -165,28 +165,29 @@ export default function ExplorePage() {
     <MainLayout title="Top Ledger APIs">
       <div className="space-y-6">
         {/* Search and Filters */}
-        <div className="bg-white rounded-sm border border-gray-200 py-1 pl-2 pr-2">
+        <div className="bg-white rounded-sm justify border border-gray-200 py-1 pl-2 pr-6">
           <div className="space-y-4">
             
             
             {/* All Filters in One Line */}
-            <div className="flex flex-wrap items-center gap-4">
-              {/* Search Bar */}
-            <div className="relative max-w-[526px] flex-1">
-              <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Search APIs by title, description, or category..."
-                value={searchTerm}
-                onChange={(e) => {
-                  setSearchTerm(e.target.value);
-                  setCurrentPage(1); // Reset to first page when searching
-                }}
-                className="pl-10 w-full text-sm rounded-sm border-black py-2 focus:outline-none"
-              />
-            </div>
+            <div className="flex flex-col lg:flex-row lg:items-center gap-4">
+              {/* Search Bar - expands to fill available space */}
+              <div className="relative flex-1 lg:max-w-none">
+                <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Search APIs by title, description, or category..."
+                  value={searchTerm}
+                  onChange={(e) => {
+                    setSearchTerm(e.target.value);
+                    setCurrentPage(1); // Reset to first page when searching
+                  }}
+                  className="pl-10 w-full text-sm rounded-sm border-black py-2 focus:outline-none"
+                />
+              </div>
               
-              <div className="flex flex-wrap gap-4 flex-1">
+              {/* Dropdowns Container - shifts right on desktop */}
+              <div className="flex flex-wrap gap-4 lg:flex-nowrap lg:ml-auto lg:flex-shrink-0">
                 <Dropdown
                   options={categoryOptions}
                   value={selectedMenuName}
@@ -196,7 +197,7 @@ export default function ExplorePage() {
                     setCurrentPage(1); // Reset to first page
                   }}
                   placeholder="All Categories"
-                  className="max-w-[200px] flex-1"
+                  className="w-full sm:w-[200px] lg:w-[200px]"
                 />
                 
                 <Dropdown
@@ -208,11 +209,10 @@ export default function ExplorePage() {
                   }}
                   placeholder={!selectedMenuName ? "Select Category First" : "All Subcategories"}
                   disabled={!selectedMenuName}
-                  className="max-w-[200px] flex-1"
+                  className="w-full sm:w-[200px] lg:w-[200px]"
                 />
 
-
-                <div className="max-w-[200px] flex-1 relative dropdown-container">
+                <div className="w-full sm:w-[200px] lg:w-[200px] relative dropdown-container">
                   <div className="flex bg-white border border-gray-200 rounded-sm transition-shadow duration-200 overflow-hidden">
                     {/* Left section - Key label */}
                     <div className="bg-gradient-to-r from-gray-50 to-gray-100 border-r border-gray-200 px-3 py-2 flex items-center">
