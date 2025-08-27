@@ -297,20 +297,18 @@ export default function ExplorePage() {
                 key={`${api.id}-${index}`}
                 className="bg-white rounded-sm border border-gray-200 py-4 px-6"
               >
-                <div className="flex items-start justify-between">
+                <div className="flex items-center justify-between">
                   <div className="flex-1">
-                    <div className="flex items-start space-x-3 mb-0">
+                    <div className="flex items-center space-x-3">
                       <div className="flex-1">
-                        <h3 className="text-md font-medium text-gray-900 mb-1">
+                        <h3 className="text-sm font-medium text-gray-800 mb-[0.2rem]">
                           {api.title}
                         </h3>
-                        
+                        {api.subtitle && (
+                          <p className="text-gray-500 text-sm">{api.subtitle}</p>
+                        )}
                       </div>
                     </div>
-                    {api.subtitle && (
-                      <p className="text-gray-600 text-sm mb-3">{api.subtitle}</p>
-                    )}
-                    
                   </div>
                   <div className="flex items-center space-x-2">
                     <Button

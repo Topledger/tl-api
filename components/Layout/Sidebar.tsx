@@ -73,8 +73,8 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                   className={cn(
                     "flex items-center px-3 py-2 text-sm font-medium transition-colors",
                     isActive
-                      ? "bg-blue-50 text-gray-700 border-r-2 border-blue-500"
-                      : "text-gray-600 hover:bg-blue-50/50 hover:text-gray-900"
+                      ? "bg-blue-50 text-gray-600 border-r-2 border-blue-500"
+                      : "text-gray-500 hover:bg-blue-50/50 hover:text-gray-900"
                   )}
                   onClick={onClose}
                 >
