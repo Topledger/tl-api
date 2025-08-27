@@ -4,6 +4,7 @@ import path from 'path';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { isS3Configured, getUserApiKeysFromS3, getApiDataFromS3 } from '@/lib/s3';
+import { logApiCall, prisma } from '@/lib/db';
 
 interface ApiItem {
   endpoint: string;
@@ -39,45 +40,63 @@ async function getApisData(): Promise<ApiData> {
   return JSON.parse(fileData);
 }
 
-// Validate user API key with authentication
+// Validate user API key with database lookup
 async function validateUserApiKey(userApiKey: string, request: NextRequest): Promise<{ isValid: boolean; userId?: string }> {
   try {
-    // Get authenticated user from session
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.email) {
-      console.log('❌ No authenticated session found');
-      return { isValid: false };
+    console.log(`🔐 Validating API key: ${userApiKey}`);
+
+    // First try to validate using database
+    const apiKey = await prisma.apiKey.findFirst({
+      where: {
+        key: userApiKey,
+        isActive: true
+      },
+      include: {
+        user: true
+      }
+    });
+
+    if (apiKey) {
+      console.log(`✅ Valid API key found in database: ${apiKey.name} for user: ${apiKey.user.email}`);
+      return { isValid: true, userId: apiKey.userId };
     }
 
-    const userId = session.user.email.replace('@', '_').replace('.', '_');
-    console.log(`🔐 Validating API key for user: ${userId}`);
+    // Fallback to old session-based validation for backward compatibility
+    const session = await getServerSession(authOptions);
+    if (session?.user?.email) {
+      const userId = session.user.email.replace('@', '_').replace('.', '_');
+      console.log(`🔐 Trying session-based validation for user: ${userId}`);
 
-    let apiKeys: any[] = [];
+      let apiKeys: any[] = [];
 
-    // Load user's API keys from S3 or local storage
-    if (isS3Configured()) {
-      try {
-        console.log('📡 Loading user API keys from S3 for validation...');
-        apiKeys = await getUserApiKeysFromS3(userId);
-      } catch (error) {
-        console.error('❌ Failed to load from S3, falling back to local storage:', error);
+      // Load user's API keys from S3 or local storage
+      if (isS3Configured()) {
+        try {
+          console.log('📡 Loading user API keys from S3 for validation...');
+          apiKeys = await getUserApiKeysFromS3(userId);
+        } catch (error) {
+          console.error('❌ Failed to load from S3, falling back to local storage:', error);
+          apiKeys = await getApiKeysFromLocal(userId);
+        }
+      } else {
+        console.log('📁 Loading user API keys from local storage for validation...');
         apiKeys = await getApiKeysFromLocal(userId);
       }
-    } else {
-      console.log('📁 Loading user API keys from local storage for validation...');
-      apiKeys = await getApiKeysFromLocal(userId);
+
+      // Check if the provided API key belongs to this user
+      const isValid = apiKeys.some((key: any) => key.key === userApiKey);
+      
+      if (isValid) {
+        console.log(`✅ Valid API key found for user: ${userId}`);
+      } else {
+        console.log(`❌ Invalid API key for user: ${userId}, checked ${apiKeys.length} keys`);
+      }
+
+      return { isValid, userId: isValid ? userId : undefined };
     }
 
-    // Check if the provided API key belongs to this user
-    const isValid = apiKeys.some((key: any) => key.key === userApiKey);
-    
-    if (isValid) {
-      console.log(`✅ Valid API key found for user: ${userId}`);
-    } else {
-      console.log(`❌ Invalid API key for user: ${userId}, checked ${apiKeys.length} keys`);
-    }
-
-    return { isValid, userId: isValid ? userId : undefined };
+    console.log(`❌ Invalid API key: ${userApiKey}`);
+    return { isValid: false };
   } catch (error) {
     console.error('Error validating API key:', error);
     return { isValid: false };
@@ -105,68 +124,56 @@ async function getApiKeysFromLocal(userId: string): Promise<any[]> {
   }
 }
 
-// Log API usage for authenticated user
-async function logApiUsage(userApiKey: string, apiId: string, userId: string) {
+// Log API usage for authenticated user - New Database Version
+async function logApiUsageToDatabase(
+  userApiKey: string, 
+  apiId: string, 
+  userId: string, 
+  method: string,
+  statusCode: number,
+  responseTime?: number,
+  userAgent?: string,
+  ipAddress?: string,
+  errorMessage?: string
+) {
   try {
-    console.log(`📊 Logging API usage for user: ${userId}, API: ${apiId}`);
+    console.log(`📊 Logging API usage to database for user: ${userId}, API: ${apiId}`);
     
-    // Load user's current API keys
-    let apiKeys: any[] = [];
-    
-    if (isS3Configured()) {
-      try {
-        console.log('📡 Loading user API keys from S3 for usage logging...');
-        apiKeys = await getUserApiKeysFromS3(userId);
-      } catch (error) {
-        console.error('❌ Failed to load from S3 for logging, falling back to local storage:', error);
-        apiKeys = await getApiKeysFromLocal(userId);
+    // Find the API key record in database
+    const apiKey = await prisma.apiKey.findFirst({
+      where: {
+        key: userApiKey,
+        isActive: true
+      },
+      include: {
+        user: true
       }
-    } else {
-      console.log('📁 Loading user API keys from local storage for usage logging...');
-      apiKeys = await getApiKeysFromLocal(userId);
+    });
+
+    if (!apiKey) {
+      console.log(`⚠️ API key not found in database: ${userApiKey}`);
+      return;
     }
 
-    // Find and update the specific API key
-    const keyIndex = apiKeys.findIndex((key: any) => key.key === userApiKey);
-    if (keyIndex !== -1) {
-      const today = new Date().toISOString().split('T')[0];
-      
-      // Update key usage stats
-      apiKeys[keyIndex].totalHits = (apiKeys[keyIndex].totalHits || 0) + 1;
-      apiKeys[keyIndex].lastUsed = today;
-      
-      // Add to daily hits
-      if (!Array.isArray(apiKeys[keyIndex].dailyHits)) {
-        apiKeys[keyIndex].dailyHits = [];
-      }
-      
-      const todayHit = apiKeys[keyIndex].dailyHits.find((hit: any) => hit.date === today);
-      if (todayHit) {
-        todayHit.hits++;
-      } else {
-        apiKeys[keyIndex].dailyHits.push({ date: today, hits: 1 });
-      }
+    // Use the actual user ID from the API key relationship
+    const actualUserId = apiKey.userId;
 
-      // Save updated API keys
-      if (isS3Configured()) {
-        try {
-          const { saveUserApiKeysToS3 } = await import('@/lib/s3');
-          console.log('📡 Saving updated API key usage to S3...');
-          await saveUserApiKeysToS3(userId, apiKeys);
-          console.log('✅ API usage logged to S3');
-        } catch (error) {
-          console.error('❌ Failed to save usage to S3, falling back to local storage:', error);
-          await saveApiKeysToLocal(userId, apiKeys);
-        }
-      } else {
-        console.log('📁 Saving updated API key usage to local storage...');
-        await saveApiKeysToLocal(userId, apiKeys);
-      }
-    } else {
-      console.log(`⚠️ API key not found for usage logging: ${userApiKey}`);
-    }
+    // Log the API call to database
+    await logApiCall({
+      userId: actualUserId,
+      apiKeyId: apiKey.id,
+      endpoint: apiId,
+      method,
+      statusCode,
+      responseTime,
+      userAgent,
+      ipAddress,
+      errorMessage
+    });
+
+    console.log('✅ API usage logged to database');
   } catch (error) {
-    console.error('Error logging API usage:', error);
+    console.error('Error logging API usage to database:', error);
   }
 }
 
@@ -258,6 +265,9 @@ async function handleRequest(
     // Build the endpoint path from the dynamic route
     const endpointPath = '/' + endpoint.join('/');
     
+    // Create the wrapped endpoint path that users see
+    const wrappedEndpointPath = `/api/tl${endpointPath}`;
+    
     // Find the matching API by path
     const matchingApi = apisData.apis.find(api => {
       const apiPath = new URL(api.endpoint).pathname;
@@ -270,9 +280,6 @@ async function handleRequest(
         { status: 404 }
       );
     }
-
-    // Log API usage for the authenticated user
-    await logApiUsage(userApiKey, matchingApi.endpoint, userId!);
 
     // Remove api_key from searchParams to avoid passing it to the target API
     searchParams.delete('api_key');
@@ -303,26 +310,81 @@ async function handleRequest(
       }
     }
 
-    // Make request to the actual Top Ledger API
-    const response = await fetch(targetUrl.toString(), requestOptions);
-    
-    if (!response.ok) {
-      return NextResponse.json(
-        { error: `Top Ledger API error: ${response.status} ${response.statusText}` },
-        { status: response.status }
+    // Track start time for response time measurement
+    const startTime = Date.now();
+    let statusCode = 200;
+    let errorMessage: string | undefined;
+
+    try {
+      // Make request to the actual Top Ledger API
+      const response = await fetch(targetUrl.toString(), requestOptions);
+      statusCode = response.status;
+      
+      if (!response.ok) {
+        errorMessage = `Top Ledger API error: ${response.status} ${response.statusText}`;
+        
+        // Log failed API call
+        await logApiUsageToDatabase(
+          userApiKey, 
+          wrappedEndpointPath, 
+          userId!, 
+          method,
+          statusCode,
+          Date.now() - startTime,
+          request.headers.get('user-agent') || undefined,
+          request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || undefined,
+          errorMessage
+        );
+
+        return NextResponse.json(
+          { error: errorMessage },
+          { status: response.status }
+        );
+      }
+
+      const data = await response.json();
+      const responseTime = Date.now() - startTime;
+
+      // Log successful API call to database
+      await logApiUsageToDatabase(
+        userApiKey, 
+        wrappedEndpointPath, 
+        userId!, 
+        method,
+        statusCode,
+        responseTime,
+        request.headers.get('user-agent') || undefined,
+        request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || undefined
       );
+
+      // Return the response with CORS headers
+      return NextResponse.json(data, {
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+          'Access-Control-Allow-Headers': 'Content-Type, X-API-Key',
+        },
+      });
+
+    } catch (fetchError) {
+      statusCode = 500;
+      errorMessage = 'Network or parsing error';
+      
+      // Log failed API call
+      await logApiUsageToDatabase(
+        userApiKey, 
+        matchingApi.endpoint, 
+        userId!, 
+        method,
+        statusCode,
+        Date.now() - startTime,
+        request.headers.get('user-agent') || undefined,
+        request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || undefined,
+        errorMessage
+      );
+
+      throw fetchError; // Re-throw to be caught by outer try-catch
     }
-
-    const data = await response.json();
-
-    // Return the response with CORS headers
-    return NextResponse.json(data, {
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type, X-API-Key',
-      },
-    });
 
   } catch (error) {
     console.error('Error in API wrapper:', error);

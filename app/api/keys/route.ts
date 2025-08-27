@@ -3,6 +3,7 @@ import fs from 'fs';
 import path from 'path';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
+import { prisma } from '@/lib/db';
 import { isS3Configured, getUserApiKeysFromS3, saveUserApiKeysToS3 } from '@/lib/s3';
 
 export async function GET() {
@@ -13,15 +14,40 @@ export async function GET() {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const userId = session.user.email.replace('@', '_').replace('.', '_');
-    console.log(`🔑 Loading API keys for user: ${userId}`);
+    console.log(`🔑 Loading API keys for user: ${session.user.email}`);
 
+    // Try database first (primary)
+    try {
+      const user = await prisma.user.findUnique({
+        where: { email: session.user.email },
+        include: { apiKeys: true }
+      });
+
+      if (user && user.apiKeys.length > 0) {
+        console.log(`✅ Loaded ${user.apiKeys.length} API keys from database`);
+        const cleanApiKeys = user.apiKeys.map(key => ({
+          id: key.id,
+          name: key.name,
+          key: key.key,
+          description: key.description,
+          createdAt: key.createdAt.toISOString().split('T')[0],
+          lastUsed: key.lastUsed?.toISOString().split('T')[0] || null,
+          totalHits: key.totalHits,
+          dailyHits: [] // Could be calculated from API logs if needed
+        }));
+        return NextResponse.json(cleanApiKeys);
+      }
+    } catch (dbError) {
+      console.error('❌ Database query failed, falling back to S3/local:', dbError);
+    }
+
+    // Fallback to S3 if database fails or has no data
+    const userId = session.user.email.replace('@', '_').replace('.', '_');
     let apiKeys: any[] = [];
 
-    // Try S3 first, fallback to local storage
     if (isS3Configured()) {
       try {
-        console.log('📡 Loading API keys from S3...');
+        console.log('📡 Falling back to S3...');
         apiKeys = await getUserApiKeysFromS3(userId);
         console.log(`✅ Loaded ${apiKeys.length} API keys from S3`);
       } catch (error) {
@@ -120,61 +146,129 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { name } = await request.json();
+    const { name, description } = await request.json();
     
     if (!name) {
       return NextResponse.json({ error: 'API key name is required' }, { status: 400 });
     }
 
-    const userId = session.user.email.replace('@', '_').replace('.', '_');
-    console.log(`🔑 Creating new API key for user: ${userId}`);
+    console.log(`🔑 Creating new API key for user: ${session.user.email}`);
 
-    // Generate a new unique API key
-    const newKey = {
-      id: `key_${Date.now()}`,
-      name,
-      key: await generateUniqueApiKey(),
-      createdAt: new Date().toISOString().split('T')[0],
-      lastUsed: null,
-      totalHits: 0,
-      dailyHits: []
-    };
+    // Generate unique API key
+    const apiKey = await generateUniqueApiKey();
 
-    // Get existing API keys
-    let apiKeys: any[] = [];
-    
-    if (isS3Configured()) {
-      try {
-        console.log('📡 Loading existing API keys from S3...');
-        apiKeys = await getUserApiKeysFromS3(userId);
-      } catch (error) {
-        console.error('❌ Failed to load from S3, falling back to local storage:', error);
+    // Try database first (primary)
+    try {
+      // Ensure user exists in database
+      const user = await prisma.user.upsert({
+        where: { email: session.user.email },
+        update: {},
+        create: {
+          email: session.user.email,
+          name: session.user.name || 'Unknown User'
+        }
+      });
+
+      // Create API key in database
+      const newKey = await prisma.apiKey.create({
+        data: {
+          name,
+          key: apiKey,
+          description: description || null,
+          userId: user.id
+        }
+      });
+
+      console.log(`✅ Created API key in database: ${name}`);
+
+      // Also sync to S3 as backup (if configured)
+      if (isS3Configured()) {
+        try {
+          const userId = session.user.email.replace('@', '_').replace('.', '_');
+          const s3Keys = await getUserApiKeysFromS3(userId).catch(() => []);
+          s3Keys.push({
+            id: newKey.id,
+            name: newKey.name,
+            key: newKey.key,
+            description: newKey.description,
+            createdAt: newKey.createdAt.toISOString().split('T')[0],
+            lastUsed: null,
+            totalHits: 0,
+            dailyHits: []
+          });
+          await saveUserApiKeysToS3(userId, s3Keys);
+          console.log('✅ Synced to S3 as backup');
+        } catch (s3Error) {
+          console.error('⚠️  Failed to sync to S3 backup:', s3Error);
+          // Don't fail the request if S3 sync fails
+        }
+      }
+
+      return NextResponse.json({
+        id: newKey.id,
+        name: newKey.name,
+        key: newKey.key,
+        description: newKey.description,
+        createdAt: newKey.createdAt.toISOString().split('T')[0],
+        lastUsed: null,
+        totalHits: 0,
+        dailyHits: []
+      }, { status: 201 });
+
+    } catch (dbError) {
+      console.error('❌ Database creation failed, falling back to S3/local:', dbError);
+      
+      // Fallback to original S3/local approach
+      const userId = session.user.email.replace('@', '_').replace('.', '_');
+      
+      // Generate a new unique API key
+      const newKey = {
+        id: `key_${Date.now()}`,
+        name,
+        key: apiKey,
+        description: description || null,
+        createdAt: new Date().toISOString().split('T')[0],
+        lastUsed: null,
+        totalHits: 0,
+        dailyHits: []
+      };
+
+      // Get existing API keys
+      let apiKeys: any[] = [];
+      
+      if (isS3Configured()) {
+        try {
+          console.log('📡 Loading existing API keys from S3...');
+          apiKeys = await getUserApiKeysFromS3(userId);
+        } catch (error) {
+          console.error('❌ Failed to load from S3, falling back to local storage:', error);
+          apiKeys = await getApiKeysFromLocal(userId);
+        }
+      } else {
+        console.log('📁 S3 not configured, loading from local storage');
         apiKeys = await getApiKeysFromLocal(userId);
       }
-    } else {
-      console.log('📁 S3 not configured, loading from local storage');
-      apiKeys = await getApiKeysFromLocal(userId);
-    }
 
-    // Add new key
-    apiKeys.push(newKey);
+      // Add new key
+      apiKeys.push(newKey);
 
-    // Save updated API keys
-    if (isS3Configured()) {
-      try {
-        console.log('📡 Saving API keys to S3...');
-        await saveUserApiKeysToS3(userId, apiKeys);
-        console.log('✅ API keys saved to S3');
-      } catch (error) {
-        console.error('❌ Failed to save to S3, falling back to local storage:', error);
+      // Save updated API keys
+      if (isS3Configured()) {
+        try {
+          console.log('📡 Saving API keys to S3...');
+          await saveUserApiKeysToS3(userId, apiKeys);
+          console.log('✅ API keys saved to S3');
+        } catch (error) {
+          console.error('❌ Failed to save to S3, falling back to local storage:', error);
+          await saveApiKeysToLocal(userId, apiKeys);
+        }
+      } else {
+        console.log('📁 Saving API keys to local storage');
         await saveApiKeysToLocal(userId, apiKeys);
       }
-    } else {
-      console.log('📁 Saving API keys to local storage');
-      await saveApiKeysToLocal(userId, apiKeys);
-    }
 
-    return NextResponse.json(newKey, { status: 201 });
+      return NextResponse.json(newKey, { status: 201 });
+    }
   } catch (error) {
     console.error('Error creating API key:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });

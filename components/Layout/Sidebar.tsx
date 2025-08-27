@@ -17,7 +17,9 @@ const navigation = [
   { name: 'API Keys', href: '/keys', icon: KeyIcon },
   //{ name: 'Usage & Billing history', href: '/usage', icon: ChartBarIcon },
   //{ name: 'Settings', href: '/settings', icon: CogIcon },
-  { name: 'Docs', href: '/docs', icon: DocumentTextIcon },
+    { name: 'Docs', href: '/docs', icon: DocumentTextIcon },
+    { name: 'Api Tracking', href: '/tracking', icon: ChartBarIcon },
+ 
 ];
 
 interface SidebarProps {

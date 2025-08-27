@@ -8,7 +8,7 @@ import MainLayout from '@/components/Layout/MainLayout';
 import Button from '@/components/UI/Button';
 import { useAppStore } from '@/lib/store';
 import { copyToClipboard, formatDate } from '@/lib/utils';
-import { getApiEndpointUsage } from '@/lib/mockData';
+// Removed mock data import - now using real tracking data
 
 export default function ApiDetailsPage() {
   const params = useParams();
@@ -27,18 +27,35 @@ export default function ApiDetailsPage() {
     loadingRef.current = true;
     setIsLoading(true);
     try {
-      // Load API endpoints first
-      const endpointsResponse = await fetch('/api/endpoints');
+      // Load API endpoints from the real API list
+      const endpointsResponse = await fetch('/api/tl-apis');
       if (!endpointsResponse.ok) {
-        throw new Error(`Endpoints API failed: ${endpointsResponse.status}`);
+        throw new Error(`API list failed: ${endpointsResponse.status}`);
       }
       const endpointsData = await endpointsResponse.json();
-      setApiEndpoints(endpointsData.endpoints);
+      setApiEndpoints(endpointsData.apis);
 
-      // Load usage data for this specific API
+      // Load real usage data for this specific API from tracking
       if (apiId) {
-        const usage = getApiEndpointUsage(apiId);
-        setApiUsageData(usage);
+        try {
+          const usageResponse = await fetch(`/api/tracking/stats?endpoint=${encodeURIComponent(apiId)}`);
+          if (usageResponse.ok) {
+            const usageData = await usageResponse.json();
+            // Convert tracking stats to chart format
+            const chartData = usageData.dailyUsage?.map((day: any) => ({
+              date: day.date,
+              requests: day.calls || 0,
+              responseTime: day.avgResponseTime || 0
+            })) || [];
+            setApiUsageData(chartData);
+          } else {
+            // Fallback to empty data if tracking API fails
+            setApiUsageData([]);
+          }
+        } catch (error) {
+          console.error('Error loading usage data:', error);
+          setApiUsageData([]);
+        }
       }
     } catch (error) {
       console.error('Error loading API data:', error);
