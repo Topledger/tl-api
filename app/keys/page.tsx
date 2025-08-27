@@ -11,8 +11,11 @@ import { formatDate } from '@/lib/utils';
 
 export default function ApiKeysPage() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [keyToDelete, setKeyToDelete] = useState<string | null>(null);
   const [newKeyName, setNewKeyName] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [visibleKeys, setVisibleKeys] = useState<Set<string>>(new Set());
   const [editingKey, setEditingKey] = useState<string | null>(null);
   const [editName, setEditName] = useState('');
@@ -120,11 +123,22 @@ export default function ApiKeysPage() {
     }
   };
 
-  const handleDeleteKey = async (keyId: string) => {
-    if (!confirm('Are you sure you want to delete this API key?')) return;
+  const openDeleteModal = (keyId: string) => {
+    setKeyToDelete(keyId);
+    setIsDeleteModalOpen(true);
+  };
 
+  const closeDeleteModal = () => {
+    setIsDeleteModalOpen(false);
+    setKeyToDelete(null);
+  };
+
+  const handleDeleteKey = async () => {
+    if (!keyToDelete) return;
+
+    setIsDeleting(true);
     try {
-      const response = await fetch(`/api/keys?id=${keyId}`, {
+      const response = await fetch(`/api/keys?id=${keyToDelete}`, {
         method: 'DELETE',
         headers: {
           'Cache-Control': 'no-cache',
@@ -133,12 +147,15 @@ export default function ApiKeysPage() {
 
       if (response.ok) {
         loadApiKeys(); // Reload the API keys list
+        closeDeleteModal();
       } else {
         throw new Error(`Delete API failed: ${response.status}`);
       }
     } catch (error) {
       console.error('Error deleting API key:', error);
       alert('Failed to delete API key. Please try again.');
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -291,7 +308,7 @@ export default function ApiKeysPage() {
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                     <div className="flex items-center space-x-2">
                       <button
-                        onClick={() => handleDeleteKey(key.id)}
+                        onClick={() => openDeleteModal(key.id)}
                         className="text-red-600 hover:text-red-700"
                       >
                         <TrashIcon className="h-4 w-4" />
@@ -320,7 +337,7 @@ export default function ApiKeysPage() {
         onClose={() => setIsCreateModalOpen(false)}
         title="Generate New API Key"
       >
-        <div className="space-y-4">
+        <div className="p-6 space-y-4">
           <Input
             label="Key Name"
             value={newKeyName}
@@ -340,6 +357,36 @@ export default function ApiKeysPage() {
               disabled={!newKeyName.trim()}
             >
               Generate Key
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Delete Confirmation Modal */}
+      <Modal
+        isOpen={isDeleteModalOpen}
+        onClose={closeDeleteModal}
+        title="Delete API Key"
+      >
+        <div className="p-6 space-y-4">
+          <p className="text-gray-600">
+            Are you sure you want to delete this API key? This action cannot be undone and will immediately revoke access for any applications using this key.
+          </p>
+          <div className="flex justify-end space-x-3">
+            <Button
+              variant="outline"
+              onClick={closeDeleteModal}
+              disabled={isDeleting}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="primary"
+              onClick={handleDeleteKey}
+              isLoading={isDeleting}
+              className="bg-red-600 hover:bg-red-700 focus:ring-red-500"
+            >
+              Delete Key
             </Button>
           </div>
         </div>
