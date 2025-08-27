@@ -129,11 +129,11 @@ export async function POST(request: Request) {
     const userId = session.user.email.replace('@', '_').replace('.', '_');
     console.log(`🔑 Creating new API key for user: ${userId}`);
 
-    // Generate a new API key
+    // Generate a new unique API key
     const newKey = {
       id: `key_${Date.now()}`,
       name,
-      key: generateApiKey(),
+      key: await generateUniqueApiKey(),
       createdAt: new Date().toISOString().split('T')[0],
       lastUsed: null,
       totalHits: 0,
@@ -311,11 +311,70 @@ export async function PUT(request: Request) {
   }
 }
 
-function generateApiKey(): string {
-  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-  let result = '';
-  for (let i = 0; i < 20; i++) {
-    result += chars.charAt(Math.floor(Math.random() * chars.length));
+// Helper function to get all API keys across all users for uniqueness check
+async function getAllApiKeysAcrossUsers(): Promise<string[]> {
+  const allKeys: string[] = [];
+  
+  try {
+    if (isS3Configured()) {
+      // For S3, we'd need to implement a way to list all user keys
+      // For now, we'll use a simpler approach with local storage
+      console.log('📡 S3 configured, but using local storage for uniqueness check');
+    }
+    
+    // Check local storage for all existing keys
+    const dataPath = path.join(process.cwd(), 'data', 'users.json');
+    try {
+      const fileData = fs.readFileSync(dataPath, 'utf8');
+      const data = JSON.parse(fileData);
+      
+      if (data.users) {
+        Object.values(data.users).forEach((userData: any) => {
+          if (userData.apiKeys && Array.isArray(userData.apiKeys)) {
+            userData.apiKeys.forEach((key: any) => {
+              if (key.key) {
+                allKeys.push(key.key);
+              }
+            });
+          }
+        });
+      }
+    } catch (error) {
+      console.log('No existing users.json file found, starting fresh');
+    }
+  } catch (error) {
+    console.error('Error getting all API keys:', error);
   }
-  return result;
+  
+  return allKeys;
+}
+
+async function generateUniqueApiKey(): Promise<string> {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  const existingKeys = await getAllApiKeysAcrossUsers();
+  
+  let attempts = 0;
+  const maxAttempts = 100; // Prevent infinite loop
+  
+  while (attempts < maxAttempts) {
+    let result = 'tl_'; // Prefix for Top Ledger
+    
+    // Generate 32 characters for a more unique key
+    for (let i = 0; i < 32; i++) {
+      result += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    
+    // Check if this key already exists
+    if (!existingKeys.includes(result)) {
+      console.log(`✅ Generated unique API key after ${attempts + 1} attempts`);
+      return result;
+    }
+    
+    attempts++;
+  }
+  
+  // Fallback with timestamp if we can't generate unique key
+  const timestamp = Date.now().toString(36);
+  const randomSuffix = Math.random().toString(36).substring(2, 15);
+  return `tl_${timestamp}_${randomSuffix}`;
 } 
