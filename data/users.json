@@ -358,22 +358,22 @@
       "lastLogin": "2024-12-30T14:22:00Z"
     },
     "ur_lucky_turtle_gmail_com": {
-      "id": "104174953441283182984",
+      "id": "cmeug4ovb0009nsba425cz3ur",
       "email": "ur.lucky.turtle@gmail.com",
       "name": "Lokesh Tiwari",
       "image": "https://lh3.googleusercontent.com/a/ACg8ocKDLf6BNuHBrBMJ7N-3hLlYWtEvukXc2CaFI3fbOYdt-6xSaI8=s96-c",
       "plan": "Basic",
       "credits": {
         "used": 0,
-        "remaining": 44000,
-        "total": 44000
+        "remaining": 4990,
+        "total": 4990
       },
       "billingCycle": {
-        "start": "2025-06-17",
-        "end": "2025-07-17"
+        "start": "2025-08-28",
+        "end": "2025-09-27"
       },
-      "createdAt": "2025-06-17T14:25:47.342Z",
-      "lastLogin": "2025-08-27T23:20:36.521Z"
+      "createdAt": "2025-08-27T20:47:20.808Z",
+      "lastLogin": "2025-08-28T12:19:40.111Z"
     },
     "tiwari2010iit_gmail_com": {
       "id": "111680292063135580990",
@@ -398,6 +398,6 @@
     "totalUsers": 3,
     "totalApiCalls": 23150,
     "totalRevenue": 119.96,
-    "lastUpdated": "2025-06-18T07:09:45.582Z"
+    "lastUpdated": "2025-08-28T12:19:40.111Z"
   }
 }

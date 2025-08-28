@@ -269,6 +269,21 @@ export async function getApiUsageStats({
     avg_response_time: data.count > 0 ? data.totalResponseTime / data.count : null
   })).sort((a, b) => b.date.localeCompare(a.date));
 
+  // Calculate monthly statistics (last 30 days)
+  const monthlyWhere: any = {
+    timestamp: { 
+      gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
+    }
+  };
+  
+  if (userId) monthlyWhere.userId = userId;
+  if (apiKeyId) monthlyWhere.apiKeyId = apiKeyId;
+
+  const monthlyCalls = await prisma.apiLog.count({ where: monthlyWhere });
+  const monthlyCredits = monthlyCalls; // 1 credit per call
+  const avgCallsPerDay = monthlyCalls / 30;
+  const avgCreditsPerDay = monthlyCredits / 30;
+
   return {
     totalCalls,
     successRate: totalCalls > 0 ? (successfulCalls / totalCalls) * 100 : 0,
@@ -276,6 +291,12 @@ export async function getApiUsageStats({
       endpoint: item.endpoint,
       count: item._count.endpoint
     })),
-    dailyUsage
+    dailyUsage,
+    monthlyStats: {
+      totalCalls: monthlyCalls,
+      totalCredits: monthlyCredits,
+      avgCallsPerDay,
+      avgCreditsPerDay
+    }
   };
 }

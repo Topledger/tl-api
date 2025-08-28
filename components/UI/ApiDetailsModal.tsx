@@ -104,6 +104,11 @@ const ApiDetailsModal: React.FC<ApiDetailsModalProps> = ({
     ? `${typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3001'}${api.wrapperUrl}?api_key=${selectedApiKey.key}`
     : '';
 
+  // Preview URL for demo purposes (doesn't consume credits)
+  const previewEndpointUrl = api && selectedApiKey 
+    ? `${typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3001'}${api.wrapperUrl.replace('/api/tl/', '/api/tl-preview/')}?api_key=${selectedApiKey.key}`
+    : '';
+
   const curlExample = fullEndpointUrl 
     ? `curl -X GET "${fullEndpointUrl}"`
     : '';
@@ -124,11 +129,12 @@ const ApiDetailsModal: React.FC<ApiDetailsModalProps> = ({
   };
 
   const fetchSampleResponse = async () => {
-    if (!fullEndpointUrl || loadingResponse) return;
+    if (!previewEndpointUrl || loadingResponse) return;
     
     setLoadingResponse(true);
     try {
-      const response = await fetch(fullEndpointUrl);
+      // Use preview endpoint to avoid consuming credits
+      const response = await fetch(previewEndpointUrl);
       const data = await response.json();
       
       // Limit the response size for display
@@ -237,7 +243,15 @@ const ApiDetailsModal: React.FC<ApiDetailsModalProps> = ({
 
           {/* Sample Response */}
           <div>
-            <h4 className="font-medium text-sm text-gray-600 mb-3">Response snippet</h4>
+            <div className="flex items-center justify-between mb-3">
+              <h4 className="font-medium text-sm text-gray-600">Response snippet</h4>
+              <div className="flex items-center space-x-1 text-xs bg-green-50 text-green-700 px-2 py-1 rounded-full border border-green-200">
+                <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                </svg>
+                <span>Preview Mode - No Credits Used</span>
+              </div>
+            </div>
             
             <div className="border border-gray-200 rounded-sm overflow-hidden h-80">
               <div className="bg-gray-100 h-full flex flex-col">

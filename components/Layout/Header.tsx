@@ -85,7 +85,7 @@ export default function Header({ title, breadcrumbs, onMenuClick }: HeaderProps)
               <>
                 {/* Credits Display */}
                 {displayUser?.credits && (
-                  <div className="hidden sm:flex items-center space-x-2 bg-gray-50 px-3 py-2 rounded-lg">
+                  <div className="hidden sm:flex items-center space-x-2 bg-gray-50 px-3 py-0 rounded-lg">
                     <div className="text-sm">
                       <span className="text-gray-600">Credits left:</span>
                       <span className="ml-1 font-semibold text-gray-900">

@@ -1,10 +1,11 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { MagnifyingGlassIcon, ChartBarIcon, ClockIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline';
+import { MagnifyingGlassIcon, ChartBarIcon, ClockIcon, CurrencyDollarIcon } from '@heroicons/react/24/outline';
 import MainLayout from '@/components/Layout/MainLayout';
 import Button from '@/components/UI/Button';
 import Dropdown from '@/components/UI/Dropdown';
+import ChartContainer from '@/components/Charts/ChartContainer';
 import { formatDate } from '@/lib/utils';
 
 interface ApiLog {
@@ -26,6 +27,12 @@ interface ApiStats {
   successRate: number;
   topEndpoints: { endpoint: string; count: number }[];
   dailyUsage: { date: string; hits: number; avg_response_time: number }[];
+  monthlyStats?: {
+    totalCalls: number;
+    totalCredits: number;
+    avgCallsPerDay: number;
+    avgCreditsPerDay: number;
+  };
 }
 
 export default function TrackingPage() {
@@ -174,8 +181,8 @@ export default function TrackingPage() {
                 </div>
                 <div className="ml-5 w-0 flex-1">
                   <dl>
-                    <dt className="text-sm font-medium text-gray-500 truncate">Total API Calls</dt>
-                    <dd className="text-lg font-medium text-gray-900">{apiStats.totalCalls.toLocaleString()}</dd>
+                    <dt className="text-sm font-medium text-gray-500 truncate">API Calls This Month</dt>
+                    <dd className="text-lg font-medium text-gray-900">{apiStats.monthlyStats?.totalCalls?.toLocaleString() || apiStats.totalCalls.toLocaleString()}</dd>
                   </dl>
                 </div>
               </div>
@@ -184,12 +191,12 @@ export default function TrackingPage() {
             <div className="bg-white rounded-sm border border-gray-200 p-6">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
-                  <ExclamationTriangleIcon className="h-8 w-8 text-green-600" />
+                  <CurrencyDollarIcon className="h-8 w-8 text-amber-600" />
                 </div>
                 <div className="ml-5 w-0 flex-1">
                   <dl>
-                    <dt className="text-sm font-medium text-gray-500 truncate">Success Rate</dt>
-                    <dd className="text-lg font-medium text-gray-900">{apiStats.successRate.toFixed(1)}%</dd>
+                    <dt className="text-sm font-medium text-gray-500 truncate">Credits Consumed This Month</dt>
+                    <dd className="text-lg font-medium text-gray-900">{apiStats.monthlyStats?.totalCredits?.toLocaleString() || apiStats.totalCalls.toLocaleString()}</dd>
                   </dl>
                 </div>
               </div>
@@ -202,9 +209,9 @@ export default function TrackingPage() {
                 </div>
                 <div className="ml-5 w-0 flex-1">
                   <dl>
-                    <dt className="text-sm font-medium text-gray-500 truncate">Top Endpoint</dt>
-                    <dd className="text-sm font-medium text-gray-900 truncate">
-                      {apiStats.topEndpoints[0]?.endpoint.split('/').pop() || 'N/A'}
+                    <dt className="text-sm font-medium text-gray-500 truncate">Avg API Calls/Day</dt>
+                    <dd className="text-lg font-medium text-gray-900">
+                      {apiStats.monthlyStats?.avgCallsPerDay?.toFixed(0) || Math.round(apiStats.totalCalls / 30)}
                     </dd>
                   </dl>
                 </div>
@@ -218,8 +225,10 @@ export default function TrackingPage() {
                 </div>
                 <div className="ml-5 w-0 flex-1">
                   <dl>
-                    <dt className="text-sm font-medium text-gray-500 truncate">Unique Endpoints</dt>
-                    <dd className="text-lg font-medium text-gray-900">{apiStats.topEndpoints.length}</dd>
+                    <dt className="text-sm font-medium text-gray-500 truncate">Avg Credits/Day</dt>
+                    <dd className="text-lg font-medium text-gray-900">
+                      {apiStats.monthlyStats?.avgCreditsPerDay?.toFixed(0) || Math.round(apiStats.totalCalls / 30)}
+                    </dd>
                   </dl>
                 </div>
               </div>
@@ -227,10 +236,20 @@ export default function TrackingPage() {
           </div>
         )}
 
-        {/* Search and Filters */}
-        <div className="bg-white rounded-sm border border-gray-200 py-1 pl-2 pr-6">
-          <div className="space-y-4">
-            {/* All Filters in One Line */}
+        {/* Usage Charts */}
+        <ChartContainer apiKeys={apiKeys} />
+
+        {/* API Logs Table */}
+        <div className="bg-white rounded-sm border border-gray-200 overflow-hidden">
+          <div className="px-6 py-4 border-b border-gray-200">
+            <h3 className="text-lg font-medium text-gray-900">API Call Logs</h3>
+            <p className="mt-1 text-sm text-gray-500">
+              Showing {filteredLogs.length} of {apiLogs.length} logs
+            </p>
+          </div>
+          
+          {/* Search and Filters Section */}
+          <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
             <div className="flex flex-col lg:flex-row lg:items-center gap-4">
               {/* Search Bar */}
               <div className="relative flex-1 lg:max-w-none">
@@ -240,7 +259,7 @@ export default function TrackingPage() {
                   placeholder="Search by endpoint, method, user, or error..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 w-full text-sm rounded-sm border-black py-2 focus:outline-none"
+                  className="pl-10 w-full text-sm rounded-sm border border-gray-200 py-2 focus:outline-none"
                 />
               </div>
               
@@ -280,16 +299,6 @@ export default function TrackingPage() {
                 />
               </div>
             </div>
-          </div>
-        </div>
-
-        {/* API Logs Table */}
-        <div className="bg-white rounded-sm border border-gray-200 overflow-hidden">
-          <div className="px-6 py-4 border-b border-gray-200">
-            <h3 className="text-lg font-medium text-gray-900">API Call Logs</h3>
-            <p className="mt-1 text-sm text-gray-500">
-              Showing {filteredLogs.length} of {apiLogs.length} logs
-            </p>
           </div>
           
           {isLoading ? (
