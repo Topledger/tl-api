@@ -8,13 +8,15 @@ import {
   ChartBarIcon, 
   CogIcon, 
   DocumentTextIcon,
-  XMarkIcon 
+  XMarkIcon,
+  CurrencyDollarIcon
 } from '@heroicons/react/24/outline';
 import { cn } from '@/lib/utils';
 
 const navigation = [
   { name: 'Explore APIs', href: '/', icon: HomeIcon },
   { name: 'API Keys', href: '/keys', icon: KeyIcon },
+  //{ name: 'Pricing', href: '/plans', icon: CurrencyDollarIcon },
   //{ name: 'Usage & Billing history', href: '/usage', icon: ChartBarIcon },
   //{ name: 'Settings', href: '/settings', icon: CogIcon },
     { name: 'Docs', href: '/docs', icon: DocumentTextIcon },

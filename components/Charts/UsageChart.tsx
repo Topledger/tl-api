@@ -9,6 +9,7 @@ import { AxisBottom, AxisLeft } from '@visx/axis';
 import { GridRows, GridColumns } from '@visx/grid';
 import { LinearGradient } from '@visx/gradient';
 import { curveMonotoneX } from '@visx/curve';
+import { localPoint } from '@visx/event';
 
 interface TimeSeriesDataPoint {
   date: string;
@@ -47,6 +48,21 @@ const getApiKeyHits = (d: ApiKeyDataPoint) => d.hits;
 const getApiKeyCredits = (d: ApiKeyDataPoint) => d.credits;
 const getApiKeyResponseTime = (d: ApiKeyDataPoint) => d.avgResponseTime;
 
+// Tooltip interfaces
+interface TooltipData {
+  date?: string;
+  name?: string;
+  hits: number;
+  credits: number;
+  avgResponseTime: number;
+  successfulCalls?: number;
+}
+
+interface TooltipPosition {
+  x: number;
+  y: number;
+}
+
 export default function UsageChart({
   data,
   apiKeyData,
@@ -58,6 +74,8 @@ export default function UsageChart({
 }: UsageChartProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [containerWidth, setContainerWidth] = useState(1000);
+  const [tooltipData, setTooltipData] = useState<TooltipData | null>(null);
+  const [tooltipPosition, setTooltipPosition] = useState<TooltipPosition | null>(null);
   const margin = { top: 20, right: 0, bottom: 60, left: 60 }; // Remove right margin
   
   // Update container width on resize
@@ -197,6 +215,49 @@ export default function UsageChart({
     }
   };
 
+  // Tooltip handlers
+  const handleMouseMove = (event: React.MouseEvent, data: TooltipData) => {
+    const point = localPoint(event);
+    if (point) {
+      setTooltipPosition({ x: point.x, y: point.y });
+      setTooltipData(data);
+    }
+  };
+
+  const handleMouseLeave = () => {
+    setTooltipData(null);
+    setTooltipPosition(null);
+  };
+
+  // Format values for tooltip
+  const formatValue = (value: number, type: 'hits' | 'credits' | 'responseTime') => {
+    if (type === 'responseTime') {
+      return `${value.toFixed(2)}ms`;
+    }
+    return value.toLocaleString();
+  };
+
+  // Get metric label and value for tooltip
+  const getMetricInfo = (data: TooltipData) => {
+    switch (metric) {
+      case 'credits':
+        return {
+          label: 'Credits Consumed',
+          value: formatValue(data.credits, 'credits')
+        };
+      case 'responseTime':
+        return {
+          label: 'Avg Response Time',
+          value: formatValue(data.avgResponseTime, 'responseTime')
+        };
+      default:
+        return {
+          label: 'API Hits',
+          value: formatValue(data.hits, 'hits')
+        };
+    }
+  };
+
   if (chartType === 'timeSeries' && timeSeriesScales) {
     const { xScale, yScale, accessor } = timeSeriesScales;
     const color = getChartColor();
@@ -227,7 +288,15 @@ export default function UsageChart({
                   height={barHeight}
                   fill={color}
                   opacity={0.8}
-                  className="hover:opacity-100 transition-opacity"
+                  className="hover:opacity-100 transition-opacity cursor-pointer"
+                  onMouseMove={(event) => handleMouseMove(event, {
+                    date: d.date,
+                    hits: d.hits,
+                    credits: d.credits,
+                    avgResponseTime: d.avgResponseTime,
+                    successfulCalls: d.successfulCalls
+                  })}
+                  onMouseLeave={handleMouseLeave}
                 />
               );
             })}
@@ -265,6 +334,26 @@ export default function UsageChart({
             />
           </Group>
         </svg>
+        
+        {/* Tooltip */}
+        {tooltipData && tooltipPosition && (
+          <div
+            className="absolute pointer-events-none z-10 bg-white border border-gray-200 rounded-lg shadow-lg p-3 text-sm"
+            style={{
+              left: tooltipPosition.x + 10,
+              top: tooltipPosition.y - 10,
+              transform: tooltipPosition.x > actualWidth / 2 ? 'translateX(-100%)' : 'translateX(0)'
+            }}
+          >
+            <div className="font-medium text-gray-900 mb-2">
+              {tooltipData.date ? formatChartDate(tooltipData.date) : tooltipData.name}
+            </div>
+            <div className="flex justify-between gap-4">
+              <span className="text-gray-600">{getMetricInfo(tooltipData).label}:</span>
+              <span className="font-medium">{getMetricInfo(tooltipData).value}</span>
+            </div>
+          </div>
+        )}
       </div>
     );
   }
@@ -299,7 +388,14 @@ export default function UsageChart({
                   height={barHeight}
                   fill={color}
                   opacity={0.8}
-                  className="hover:opacity-100 transition-opacity"
+                  className="hover:opacity-100 transition-opacity cursor-pointer"
+                  onMouseMove={(event) => handleMouseMove(event, {
+                    name: d.name,
+                    hits: d.hits,
+                    credits: d.credits,
+                    avgResponseTime: d.avgResponseTime
+                  })}
+                  onMouseLeave={handleMouseLeave}
                 />
               );
             })}
@@ -336,6 +432,26 @@ export default function UsageChart({
             />
           </Group>
         </svg>
+        
+        {/* Tooltip */}
+        {tooltipData && tooltipPosition && (
+          <div
+            className="absolute pointer-events-none z-10 bg-white border border-gray-200 rounded-lg shadow-lg p-3 text-sm"
+            style={{
+              left: tooltipPosition.x + 10,
+              top: tooltipPosition.y - 10,
+              transform: tooltipPosition.x > actualWidth / 2 ? 'translateX(-100%)' : 'translateX(0)'
+            }}
+          >
+            <div className="font-medium text-gray-900 mb-2">
+              {tooltipData.date ? formatChartDate(tooltipData.date) : tooltipData.name}
+            </div>
+            <div className="flex justify-between gap-4">
+              <span className="text-gray-600">{getMetricInfo(tooltipData).label}:</span>
+              <span className="font-medium">{getMetricInfo(tooltipData).value}</span>
+            </div>
+          </div>
+        )}
       </div>
     );
   }
