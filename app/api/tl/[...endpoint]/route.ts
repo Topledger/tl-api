@@ -4,7 +4,7 @@ import path from 'path';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { isS3Configured, getUserApiKeysFromS3, getApiDataFromS3 } from '@/lib/s3';
-import { logApiCall, prisma } from '@/lib/db';
+import { logApiCall, prisma, checkUserCredits, deductUserCredits } from '@/lib/db';
 
 interface ApiItem {
   endpoint: string;
@@ -259,6 +259,15 @@ async function handleRequest(
       );
     }
 
+    // Check if user has sufficient credits
+    const hasCredits = await checkUserCredits(userId!, 1);
+    if (!hasCredits) {
+      return NextResponse.json(
+        { error: 'Insufficient credits. Please contact support to add more credits to your account.' },
+        { status: 402 } // Payment Required status code
+      );
+    }
+
     // Load APIs data (now async)
     const apisData = await getApisData();
     
@@ -344,6 +353,13 @@ async function handleRequest(
 
       const data = await response.json();
       const responseTime = Date.now() - startTime;
+
+      // Deduct credits for successful API call
+      const creditsDeducted = await deductUserCredits(userId!, 1);
+      if (!creditsDeducted) {
+        console.error(`Failed to deduct credits for user: ${userId}`);
+        // Still continue with the response since the API call was successful
+      }
 
       // Log successful API call to database
       await logApiUsageToDatabase(

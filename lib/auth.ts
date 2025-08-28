@@ -2,6 +2,7 @@ import { NextAuthOptions } from 'next-auth';
 import GoogleProvider from 'next-auth/providers/google';
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'fs';
 import { join } from 'path';
+import { prisma } from './db';
 
 // Path to store user data
 const USER_DATA_PATH = join(process.cwd(), 'data', 'users.json');
@@ -91,8 +92,85 @@ function writeUserDatabase(database: UserDatabase) {
   }
 }
 
-// Get or create user
-function getOrCreateUser(profile: { sub?: string; email: string; name: string; picture?: string }): UserData {
+// Get or create user in database
+async function getOrCreateUser(profile: { sub?: string; email: string; name: string; picture?: string }): Promise<UserData> {
+  try {
+    // First try to find existing user in database
+    let user = await prisma.user.findUnique({
+      where: { email: profile.email }
+    });
+
+    if (!user) {
+      // Create new user in database
+      user = await prisma.user.create({
+        data: {
+          email: profile.email,
+          name: profile.name,
+          picture: profile.picture,
+          plan: 'Basic',
+          credits: 5000 // Default credits
+        }
+      });
+
+      console.log(`✅ Created new user in database: ${user.email} with ${user.credits} credits`);
+    } else {
+      // Update existing user
+      user = await prisma.user.update({
+        where: { id: user.id },
+        data: {
+          name: profile.name,
+          picture: profile.picture,
+          updatedAt: new Date()
+        }
+      });
+
+      console.log(`🔄 Updated existing user: ${user.email} (${user.credits} credits remaining)`);
+    }
+
+    // Convert database user to UserData format for compatibility
+    const userData: UserData = {
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      image: user.picture || undefined,
+      plan: user.plan,
+      credits: {
+        used: 0, // We don't track this separately in the new system
+        remaining: user.credits,
+        total: user.credits, // For now, use current credits as total
+      },
+      billingCycle: {
+        start: new Date().toISOString().split('T')[0],
+        end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+      },
+      createdAt: user.createdAt.toISOString(),
+      lastLogin: new Date().toISOString(),
+    };
+
+    // Also maintain JSON file for backward compatibility
+    try {
+      const database = readUserDatabase();
+      const userKey = profile.email.replace(/[^a-zA-Z0-9]/g, '_');
+      database.users[userKey] = userData;
+      database.globalStats.totalUsers = Object.keys(database.users).length;
+      database.globalStats.lastUpdated = new Date().toISOString();
+      writeUserDatabase(database);
+    } catch (jsonError) {
+      console.error('Error updating JSON file (non-critical):', jsonError);
+    }
+
+    return userData;
+  } catch (error) {
+    console.error('Error in getOrCreateUser:', error);
+    
+    // Fallback to JSON file system
+    console.log('Falling back to JSON file system...');
+    return getOrCreateUserFromJSON(profile);
+  }
+}
+
+// Fallback function for JSON file system
+function getOrCreateUserFromJSON(profile: { sub?: string; email: string; name: string; picture?: string }): UserData {
   const database = readUserDatabase();
   const userKey = profile.email.replace(/[^a-zA-Z0-9]/g, '_'); // Safe key for object
   let user = database.users[userKey];
@@ -107,8 +185,8 @@ function getOrCreateUser(profile: { sub?: string; email: string; name: string; p
       plan: 'Basic',
       credits: {
         used: 0,
-        remaining: 44000,
-        total: 44000,
+        remaining: 5000, // Updated to 5000 credits
+        total: 5000,
       },
       billingCycle: {
         start: new Date().toISOString().split('T')[0],
@@ -142,32 +220,72 @@ export const authOptions: NextAuthOptions = {
   ],
   callbacks: {
     async signIn({ profile }) {
-      // Store or update user in JSON file
+      // Store or update user in database
       if (profile) {
-        getOrCreateUser(profile as { sub?: string; email: string; name: string; picture?: string });
+        await getOrCreateUser(profile as { sub?: string; email: string; name: string; picture?: string });
       }
       return true;
     },
     async session({ session }) {
       if (session.user?.email) {
-        const database = readUserDatabase();
-        const userKey = session.user.email.replace(/[^a-zA-Z0-9]/g, '_');
-        const userData = database.users[userKey];
-        if (userData) {
-          session.user = {
-            ...session.user,
-            id: userData.id,
-            plan: userData.plan,
-            credits: userData.credits,
-            billingCycle: userData.billingCycle,
-          };
+        try {
+          // Try to get user from database first
+          const dbUser = await prisma.user.findUnique({
+            where: { email: session.user.email }
+          });
+
+          if (dbUser) {
+            session.user = {
+              ...session.user,
+              id: dbUser.id,
+              plan: dbUser.plan,
+              credits: {
+                used: 0,
+                remaining: dbUser.credits,
+                total: dbUser.credits,
+              },
+              billingCycle: {
+                start: new Date().toISOString().split('T')[0],
+                end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+              },
+            };
+          } else {
+            // Fallback to JSON file
+            const database = readUserDatabase();
+            const userKey = session.user.email.replace(/[^a-zA-Z0-9]/g, '_');
+            const userData = database.users[userKey];
+            if (userData) {
+              session.user = {
+                ...session.user,
+                id: userData.id,
+                plan: userData.plan,
+                credits: userData.credits,
+                billingCycle: userData.billingCycle,
+              };
+            }
+          }
+        } catch (error) {
+          console.error('Error getting user session data:', error);
+          // Fallback to JSON file
+          const database = readUserDatabase();
+          const userKey = session.user.email.replace(/[^a-zA-Z0-9]/g, '_');
+          const userData = database.users[userKey];
+          if (userData) {
+            session.user = {
+              ...session.user,
+              id: userData.id,
+              plan: userData.plan,
+              credits: userData.credits,
+              billingCycle: userData.billingCycle,
+            };
+          }
         }
       }
       return session;
     },
     async jwt({ token, profile }) {
       if (profile) {
-        token.userData = getOrCreateUser(profile as { sub?: string; email: string; name: string; picture?: string });
+        token.userData = await getOrCreateUser(profile as { sub?: string; email: string; name: string; picture?: string });
       }
       return token;
     },
@@ -180,15 +298,87 @@ export const authOptions: NextAuthOptions = {
   },
 };
 
-// Helper function to get user by email
-export function getUserByEmail(email: string): UserData | null {
+// Helper function to get user by email (database first, fallback to JSON)
+export async function getUserByEmail(email: string): Promise<UserData | null> {
+  try {
+    // Try database first
+    const dbUser = await prisma.user.findUnique({
+      where: { email }
+    });
+
+    if (dbUser) {
+      return {
+        id: dbUser.id,
+        email: dbUser.email,
+        name: dbUser.name,
+        image: dbUser.picture || undefined,
+        plan: dbUser.plan,
+        credits: {
+          used: 0,
+          remaining: dbUser.credits,
+          total: dbUser.credits,
+        },
+        billingCycle: {
+          start: new Date().toISOString().split('T')[0],
+          end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        },
+        createdAt: dbUser.createdAt.toISOString(),
+        lastLogin: new Date().toISOString(),
+      };
+    }
+  } catch (error) {
+    console.error('Error getting user from database:', error);
+  }
+
+  // Fallback to JSON
   const database = readUserDatabase();
   const userKey = email.replace(/[^a-zA-Z0-9]/g, '_');
   return database.users[userKey] || null;
 }
 
-// Helper function to update user data
-export function updateUserData(email: string, updates: Partial<UserData>): UserData | null {
+// Helper function to update user data (database first, fallback to JSON)
+export async function updateUserData(email: string, updates: Partial<UserData>): Promise<UserData | null> {
+  try {
+    // Try updating in database first
+    const dbUser = await prisma.user.findUnique({
+      where: { email }
+    });
+
+    if (dbUser) {
+      const updatedUser = await prisma.user.update({
+        where: { email },
+        data: {
+          ...(updates.name && { name: updates.name }),
+          ...(updates.image && { picture: updates.image }),
+          ...(updates.plan && { plan: updates.plan }),
+          ...(updates.credits?.remaining && { credits: updates.credits.remaining }),
+        }
+      });
+
+      return {
+        id: updatedUser.id,
+        email: updatedUser.email,
+        name: updatedUser.name,
+        image: updatedUser.picture || undefined,
+        plan: updatedUser.plan,
+        credits: {
+          used: 0,
+          remaining: updatedUser.credits,
+          total: updatedUser.credits,
+        },
+        billingCycle: {
+          start: new Date().toISOString().split('T')[0],
+          end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        },
+        createdAt: updatedUser.createdAt.toISOString(),
+        lastLogin: new Date().toISOString(),
+      };
+    }
+  } catch (error) {
+    console.error('Error updating user in database:', error);
+  }
+
+  // Fallback to JSON file
   const database = readUserDatabase();
   const userKey = email.replace(/[^a-zA-Z0-9]/g, '_');
   

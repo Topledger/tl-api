@@ -120,6 +120,74 @@ export async function getApiLogs({
   };
 }
 
+// Deduct credits from user account
+export async function deductUserCredits(userId: string, amount: number = 1): Promise<boolean> {
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { credits: true }
+    });
+
+    if (!user) {
+      console.error(`User not found: ${userId}`);
+      return false;
+    }
+
+    if (user.credits < amount) {
+      console.log(`Insufficient credits for user: ${userId}. Has ${user.credits}, needs ${amount}`);
+      return false;
+    }
+
+    await prisma.user.update({
+      where: { id: userId },
+      data: {
+        credits: { decrement: amount }
+      }
+    });
+
+    console.log(`Deducted ${amount} credits from user: ${userId}. Remaining: ${user.credits - amount}`);
+    return true;
+  } catch (error) {
+    console.error('Error deducting user credits:', error);
+    return false;
+  }
+}
+
+// Check if user has sufficient credits
+export async function checkUserCredits(userId: string, requiredAmount: number = 1): Promise<boolean> {
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { credits: true }
+    });
+
+    if (!user) {
+      console.error(`User not found: ${userId}`);
+      return false;
+    }
+
+    return user.credits >= requiredAmount;
+  } catch (error) {
+    console.error('Error checking user credits:', error);
+    return false;
+  }
+}
+
+// Get user's current credit balance
+export async function getUserCredits(userId: string): Promise<number | null> {
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { credits: true }
+    });
+
+    return user?.credits || null;
+  } catch (error) {
+    console.error('Error getting user credits:', error);
+    return null;
+  }
+}
+
 // Get API usage statistics
 export async function getApiUsageStats({
   userId,

@@ -83,20 +83,18 @@ export default function Header({ title, breadcrumbs, onMenuClick }: HeaderProps)
           <div className="flex items-center space-x-4">
             {session ? (
               <>
-                {/* Credits Display 
+                {/* Credits Display */}
                 {displayUser?.credits && (
                   <div className="hidden sm:flex items-center space-x-2 bg-gray-50 px-3 py-2 rounded-lg">
                     <div className="text-sm">
-                      <span className="text-gray-600">Credits:</span>
+                      <span className="text-gray-600">Credits left:</span>
                       <span className="ml-1 font-semibold text-gray-900">
                         {displayUser.credits.remaining?.toLocaleString() || 0}
                       </span>
-                      <span className="text-gray-300">
-                        /{displayUser.credits.total?.toLocaleString() || 0}
-                      </span>
+                      
                     </div>
                   </div>
-                )}*/}
+                )}
 
                 {/* User Dropdown */}
                 <div className="relative">
