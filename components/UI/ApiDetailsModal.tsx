@@ -14,6 +14,13 @@ interface ApiItem {
   pageName: string;
   method: string;
   originalUrl: string;
+  responseColumns?: Array<{
+    name: string;
+    type: string;
+    description?: string;
+    example?: string;
+  }>;
+  description?: string;
 }
 
 interface ApiKey {
@@ -169,10 +176,17 @@ const ApiDetailsModal: React.FC<ApiDetailsModalProps> = ({
     if (isOpen && api && selectedApiKey) {
       setSampleResponse(null);
       setCopied(false);
+      // Debug: Log API data to see what we're receiving
+      console.log('API Data in Modal:', api);
+      console.log('API Response Columns:', api.responseColumns);
+      console.log('API Description:', api.description);
       // Auto-fetch sample response when modal opens
       fetchSampleResponse();
     }
   }, [isOpen, api?.id, selectedApiKey?.id]);
+
+  // Only use responseColumns from S3 API data - no fallbacks
+  const displayColumns = (api && api.responseColumns && api.responseColumns.length > 0) ? api.responseColumns : null;
 
   if (!api || !selectedApiKey) return null;
 
@@ -224,6 +238,55 @@ const ApiDetailsModal: React.FC<ApiDetailsModalProps> = ({
             </Button>
           </div>
         </div>
+
+        {/* API Description */}
+        {api.description && (
+          <div>
+            <h4 className="font-semibold text-gray-900 mb-0">Description</h4>
+            <p className="text-sm text-gray-700 bg-gray-50 p-3 rounded-sm">{api.description}</p>
+          </div>
+        )}
+
+        {/* Response Columns */}
+        {displayColumns && displayColumns.length > 0 && (
+          <div>
+            <h4 className="font-medium text-sm text-gray-600 mb-2">Response Columns</h4>
+            <div className="border border-gray-200 h-[300px] rounded-sm overflow-scroll">
+              <table className="w-full text-sm">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-4 py-3 text-left font-medium text-gray-900 border-b border-gray-200">
+                      Column Name
+                    </th>
+                    <th className="px-4 py-3 text-left font-medium text-gray-900 border-b border-gray-200">
+                      Type
+                    </th>
+                    <th className="px-4 py-3 text-left font-medium text-gray-900 border-b border-gray-200">
+                      Description
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white">
+                  {displayColumns.map((column: { name: string; type: string; description?: string; example?: string }, index: number) => (
+                    <tr key={index} className="border-b border-gray-100 last:border-b-0">
+                      <td className="px-4 py-3 font-mono text-blue-600 bg-blue-50/30">
+                        {column.name}
+                      </td>
+                      <td className="px-4 py-3 text-gray-600">
+                        <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-gray-100 text-gray-800">
+                          {column.type}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-gray-700">
+                        {column.description || '-'}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
 
         {/* Horizontal Line */}
         <hr className="border-gray-200" />

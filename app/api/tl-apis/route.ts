@@ -1,6 +1,4 @@
 import { NextResponse } from 'next/server';
-import fs from 'fs';
-import path from 'path';
 import { getApiDataFromS3, isS3Configured } from '@/lib/s3';
 
 interface ApiItem {
@@ -12,6 +10,13 @@ interface ApiItem {
   pageName: string;
   menuId: string;
   menuName: string;
+  responseColumns?: Array<{
+    name: string;
+    type: string;
+    description?: string;
+    example?: string;
+  }>;
+  description?: string;
 }
 
 interface ApiData {
@@ -30,34 +35,42 @@ interface WrappedApi {
   pageName: string;
   method: string;
   originalUrl: string;
+  responseColumns?: Array<{
+    name: string;
+    type: string;
+    description?: string;
+    example?: string;
+  }>;
+  description?: string;
 }
 
 export async function GET() {
   try {
     let apisData: ApiData;
 
-    // Try to load from S3 first, fall back to local file
-    if (isS3Configured()) {
-      console.log('✅ S3 configured, attempting to load API data from S3...');
-      try {
-        apisData = await getApiDataFromS3();
-        console.log('✅ Successfully loaded API data from S3 (admin/api-data/api-data.json)');
-      } catch (s3Error) {
-        console.error('❌ Failed to load from S3, falling back to local file:', s3Error);
-        // Fall back to local file
-        const apisPath = path.join(process.cwd(), 'public', 'apis_list.json');
-        console.log('📁 Loading from local file:', apisPath);
-        const fileData = fs.readFileSync(apisPath, 'utf8');
-        apisData = JSON.parse(fileData);
-        console.log('✅ Successfully loaded from local fallback file');
-      }
-    } else {
-      
-      // Load from local file
-      throw new Error('failed to load');
-     
-      
-      
+    // Only load from S3, no fallback
+    if (!isS3Configured()) {
+      console.log('❌ S3 not configured, returning empty API list');
+      return NextResponse.json({
+        totalApis: 0,
+        extractedAt: new Date().toISOString(),
+        apis: [],
+      });
+    }
+
+    console.log('✅ S3 configured, attempting to load API data from S3...');
+    try {
+      apisData = await getApiDataFromS3();
+      console.log('✅ Successfully loaded API data from S3 (admin/api-data/api-data.json)');
+      console.log('📊 Sample API item with columns:', apisData.apis[0]);
+    } catch (s3Error) {
+      console.error('❌ Failed to load from S3:', s3Error);
+      // Return empty list instead of falling back
+      return NextResponse.json({
+        totalApis: 0,
+        extractedAt: new Date().toISOString(),
+        apis: [],
+      });
     }
 
     // Transform APIs to wrapper format
@@ -78,6 +91,8 @@ export async function GET() {
         pageName: api.pageName,
         method: 'GET', // Most Top Ledger APIs are GET, but can handle POST too
         originalUrl: api.endpoint,
+        responseColumns: api.responseColumns,
+        description: api.description,
       };
     });
 

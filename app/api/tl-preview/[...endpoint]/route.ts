@@ -15,6 +15,13 @@ interface ApiItem {
   pageName: string;
   menuId: string;
   menuName: string;
+  responseColumns?: Array<{
+    name: string;
+    type: string;
+    description?: string;
+    example?: string;
+  }>;
+  description?: string;
 }
 
 interface ApiData {

@@ -18,6 +18,13 @@ interface ApiItem {
   pageName: string;
   method: string;
   originalUrl: string;
+  responseColumns?: Array<{
+    name: string;
+    type: string;
+    description?: string;
+    example?: string;
+  }>;
+  description?: string;
 }
 
 interface ApiData {

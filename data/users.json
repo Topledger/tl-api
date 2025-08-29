@@ -369,11 +369,11 @@
         "total": 4990
       },
       "billingCycle": {
-        "start": "2025-08-28",
-        "end": "2025-09-27"
+        "start": "2025-08-29",
+        "end": "2025-09-28"
       },
       "createdAt": "2025-08-27T20:47:20.808Z",
-      "lastLogin": "2025-08-28T12:19:40.111Z"
+      "lastLogin": "2025-08-29T10:38:28.608Z"
     },
     "tiwari2010iit_gmail_com": {
       "id": "111680292063135580990",
@@ -398,6 +398,6 @@
     "totalUsers": 3,
     "totalApiCalls": 23150,
     "totalRevenue": 119.96,
-    "lastUpdated": "2025-08-28T12:19:40.111Z"
+    "lastUpdated": "2025-08-29T10:38:28.609Z"
   }
 }
