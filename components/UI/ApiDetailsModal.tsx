@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Modal from './Modal';
 import Button from './Button';
-import { DocumentDuplicateIcon, CheckIcon } from '@heroicons/react/24/outline';
+import { DocumentDuplicateIcon, CheckIcon, ChevronDownIcon } from '@heroicons/react/24/outline';
 import { copyToClipboard } from '@/lib/utils';
 
 interface ApiItem {
@@ -36,6 +36,15 @@ interface ApiDetailsModalProps {
   selectedApiKey: ApiKey | null;
 }
 
+// Helper function to add line numbers to code
+const addLineNumbers = (code: string) => {
+  const lines = code.split('\n');
+  return lines.map((line, index) => ({
+    number: index + 1,
+    content: line
+  }));
+};
+
 // Tabs component for usage examples
 const UsageExamplesTabs: React.FC<{
   curlExample: string;
@@ -43,13 +52,14 @@ const UsageExamplesTabs: React.FC<{
   fullEndpointUrl: string;
 }> = ({ curlExample, fetchExample, fullEndpointUrl }) => {
   const [activeTab, setActiveTab] = useState('curl');
+  const [copiedTab, setCopiedTab] = useState<string | null>(null);
 
   const tabs = [
     { id: 'curl', label: 'cURL', content: curlExample },
-    { id: 'js', label: 'JavaScript', content: fetchExample },
+    { id: 'js', label: 'JS', content: fetchExample },
     { 
       id: 'python', 
-      label: 'Python', 
+      label: 'PY', 
       content: `import requests
 
 response = requests.get('${fullEndpointUrl}')
@@ -58,40 +68,80 @@ print(data)`
     }
   ];
 
+  const handleCopyCode = async () => {
+    const activeTabContent = tabs.find(tab => tab.id === activeTab)?.content;
+    if (activeTabContent) {
+      await copyToClipboard(activeTabContent);
+      setCopiedTab(activeTab);
+      setTimeout(() => setCopiedTab(null), 2000);
+    }
+  };
+
   return (
-    <div className="border border-gray-200 rounded-sm overflow-hidden h-80">
+    <div className="border border-gray-200 rounded-sm overflow-hidden">
       {/* Tab Headers */}
       <div className="flex border-b border-gray-200 bg-blue-50/50 rounded-sm">
-        {tabs.map((tab) => (
-          <button
-            key={tab.id}
-            onClick={() => setActiveTab(tab.id)}
-            className={`flex-1 px-4 py-3 text-sm font-medium transition-all duration-200 relative ${
-              activeTab === tab.id
-                ? 'bg-blue-50 text-blue-500 shadow-sm'
-                : 'text-gray-600 hover:text-gray-900 hover:bg-blue-50/70'
-            }`}
-          >
-            {tab.label}
-            {activeTab === tab.id && (
-              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-500"></div>
-            )}
-          </button>
-        ))}
+        <div className="flex flex-1">
+          {tabs.map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`flex-1 px-2 py-2 text-xs font-medium transition-all duration-200 relative ${
+                activeTab === tab.id
+                  ? 'bg-blue-50 text-blue-500 shadow-sm'
+                  : 'text-gray-600 hover:text-gray-900 hover:bg-blue-50/70'
+              }`}
+            >
+              {tab.label}
+              {activeTab === tab.id && (
+                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-500"></div>
+              )}
+            </button>
+          ))}
+        </div>
+        <button
+          onClick={handleCopyCode}
+          className="px-3 py-2 text-xs transition-all duration-200 border-l border-gray-200 bg-blue-50/50 text-gray-500 hover:text-gray-700 hover:bg-blue-50"
+          title="Copy code"
+        >
+          {copiedTab === activeTab ? (
+            <CheckIcon className="h-3 w-3" />
+          ) : (
+            <DocumentDuplicateIcon className="h-3 w-3" />
+          )}
+        </button>
       </div>
       
       {/* Tab Content */}
-      <div className="bg-gray-100 flex-1 overflow-hidden">
-        {tabs.map((tab) => (
-          <div
-            key={tab.id}
-            className={`h-full overflow-y-auto ${activeTab === tab.id ? 'block' : 'hidden'}`}
-          >
-            <code className="block p-4 text-sm whitespace-pre-wrap break-words font-mono">
-              {tab.content}
-            </code>
-          </div>
-        ))}
+      <div className="bg-white overflow-hidden">
+        {tabs.map((tab) => {
+          const numberedLines = addLineNumbers(tab.content);
+          return (
+            <div
+              key={tab.id}
+              className={`${activeTab === tab.id ? 'block' : 'hidden'}`}
+            >
+              <div className="flex text-sm font-mono">
+                {/* Line Numbers */}
+                <div className="bg-gray-50 text-gray-500 px-0 py-4 select-none border-r border-gray-200 min-w-[2rem]">
+                  {numberedLines.map((line) => (
+                    <div key={line.number} className="text-center leading-6">
+                      {line.number}
+                    </div>
+                  ))}
+                </div>
+                                 {/* Code Content */}
+                 <div className={`flex-1 bg-white text-gray-800 px-4 py-4 ${tab.id === 'curl' ? '' : 'overflow-x-auto'}`}>
+                   {numberedLines.map((line) => (
+                     <div key={line.number} className={`leading-6 ${tab.id === 'curl' ? 'whitespace-pre-wrap break-words' : 'whitespace-pre'}`}>
+                       {line.content}
+                     </div>
+                   ))}
+                 </div>
+              </div>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
@@ -106,6 +156,7 @@ const ApiDetailsModal: React.FC<ApiDetailsModalProps> = ({
   const [copied, setCopied] = useState(false);
   const [sampleResponse, setSampleResponse] = useState<any>(null);
   const [loadingResponse, setLoadingResponse] = useState(false);
+  const [expandedRows, setExpandedRows] = useState<Set<number>>(new Set());
 
   const fullEndpointUrl = api && selectedApiKey 
     ? `${typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3001'}${api.wrapperUrl}?api_key=${selectedApiKey.key}`
@@ -185,6 +236,19 @@ const ApiDetailsModal: React.FC<ApiDetailsModalProps> = ({
     }
   }, [isOpen, api?.id, selectedApiKey?.id]);
 
+  // Toggle row expansion
+  const toggleRowExpansion = (index: number) => {
+    setExpandedRows(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(index)) {
+        newSet.delete(index);
+      } else {
+        newSet.add(index);
+      }
+      return newSet;
+    });
+  };
+
   // Only use responseColumns from S3 API data - no fallbacks
   const displayColumns = (api && api.responseColumns && api.responseColumns.length > 0) ? api.responseColumns : null;
 
@@ -247,82 +311,126 @@ const ApiDetailsModal: React.FC<ApiDetailsModalProps> = ({
           </div>
         )}
 
-        {/* Response Columns */}
-        {displayColumns && displayColumns.length > 0 && (
-          <div>
-            <h4 className="font-medium text-sm text-gray-600 mb-2">Response Columns</h4>
-            <div className="border border-gray-200 h-[300px] rounded-sm overflow-scroll">
-              <table className="w-full text-sm">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-4 py-3 text-left font-medium text-gray-900 border-b border-gray-200">
-                      Column Name
-                    </th>
-                    <th className="px-4 py-3 text-left font-medium text-gray-900 border-b border-gray-200">
-                      Type
-                    </th>
-                    <th className="px-4 py-3 text-left font-medium text-gray-900 border-b border-gray-200">
-                      Description
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white">
-                  {displayColumns.map((column: { name: string; type: string; description?: string; example?: string }, index: number) => (
-                    <tr key={index} className="border-b border-gray-100 last:border-b-0">
-                      <td className="px-4 py-3 font-mono text-blue-600 bg-blue-50/30">
-                        {column.name}
-                      </td>
-                      <td className="px-4 py-3 text-gray-600">
-                        <span className="inline-flex items-center px-2 py-1 rounded-sm text-xs font-medium bg-green-100 text-green-800">
-                          {column.type}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 text-gray-700">
-                        {column.description || '-'}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
-
         {/* Horizontal Line */}
         <hr className="border-gray-200" />
 
-        {/* Usage Examples and Sample Response - Side by Side */}
+        {/* Response Columns (Left) and Usage Examples + Response (Right) - Side by Side */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Usage Examples */}
-          <div>
-            <h4 className="font-medium text-sm text-gray-600 mb-3">Usage Examples</h4>
-            
-            <UsageExamplesTabs 
-              curlExample={curlExample}
-              fetchExample={fetchExample}
-              fullEndpointUrl={fullEndpointUrl}
-            />
-          </div>
-
-          {/* Sample Response */}
-          <div>
-            <div className="flex items-center justify-between mb-3">
-              <h4 className="font-medium text-sm text-gray-600">Response snippet</h4>
-             
-            </div>
-            
-            <div className="border border-gray-200 rounded-sm overflow-hidden h-80">
-              <div className="bg-gray-100 h-full flex flex-col">
-                <div className="flex-1 overflow-y-auto">
-                  <code className="block p-4 text-sm overflow-x-auto whitespace-pre font-mono">
-                    {sampleResponse ? JSON.stringify(sampleResponse, null, 2) : 'Loading response...'}
-                  </code>
+          {/* Response Columns - Left Side */}
+          {displayColumns && displayColumns.length > 0 && (
+            <div>
+              <h4 className="font-medium text-sm text-gray-600 mb-2">Response Columns</h4>
+              <div className="border border-gray-200 rounded-sm overflow-scroll">
+                <div className="divide-y divide-gray-200">
+                  {displayColumns.map((column: { name: string; type: string; description?: string; example?: string }, index: number) => (
+                    <div key={index} className="bg-white">
+                      {/* Accordion Header - Always visible */}
+                      <button
+                        onClick={() => toggleRowExpansion(index)}
+                        className="w-full px-4 py-3 flex items-center justify-between hover:bg-gray-50 focus:outline-none focus:bg-gray-50 transition-colors"
+                      >
+                        <span className="text-gray-600 font-normal text-sm">
+                          {column.name}
+                        </span>
+                        <div className="flex items-center space-x-2">
+                          <span className="inline-flex items-center px-2 py-1 rounded-sm text-xs font-medium bg-green-100 text-green-800">
+                            {column.type}
+                          </span>
+                          <ChevronDownIcon 
+                            className={`h-4 w-4 text-gray-500 transition-transform duration-200 ${
+                              expandedRows.has(index) ? 'rotate-180' : ''
+                            }`}
+                          />
+                        </div>
+                      </button>
+                      
+                      {/* Accordion Content - Shows on expand */}
+                      {expandedRows.has(index) && (
+                        <div className="px-4 pb-3 text-sm text-gray-700 bg-white">
+                          <div className="border-l-2 border-blue-200 pl-3">
+                            <p className="font-semibold text-gray-700 mb-1 text-xs">Description:</p>
+                            <p className="text-gray-600 text-sm">{column.description || 'No description available'}</p>
+                            {column.example && (
+                              <>
+                                <p className="font-semibold text-gray-700 mt-2 mb-1 text-xs">Example:</p>
+                                <code className="text-xs bg-gray-100 px-2 py-1 rounded text-gray-600">{column.example}</code>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ))}
                 </div>
-                {sampleResponse && !sampleResponse.error && (
-                  <div className="text-xs text-gray-600 px-4 py-2 border-t border-gray-200 bg-gray-50">
-                    Note: Response has been truncated for display. The actual API returns complete data.
+              </div>
+            </div>
+          )}
+
+          {/* Usage Examples and Sample Response - Right Side */}
+          <div className="space-y-6">
+            {/* Usage Examples */}
+            <div>
+              <h4 className="font-medium text-sm text-gray-600 mb-2">Usage Examples</h4>
+              
+              <UsageExamplesTabs 
+                curlExample={curlExample}
+                fetchExample={fetchExample}
+                fullEndpointUrl={fullEndpointUrl}
+              />
+            </div>
+
+            {/* Sample Response */}
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <h4 className="font-medium text-sm text-gray-600">Response snippet</h4>
+               
+              </div>
+              
+              <div className="border border-gray-200 rounded-sm overflow-hidden h-80">
+                <div className="bg-white h-full flex flex-col">
+                  <div className="flex-1 overflow-hidden">
+                    {sampleResponse ? (
+                      (() => {
+                        const jsonString = JSON.stringify(sampleResponse, null, 2);
+                        const numberedLines = addLineNumbers(jsonString);
+                        return (
+                          <div className="flex text-sm font-mono h-full">
+                            {/* Line Numbers */}
+                            <div className="bg-gray-50 text-gray-500 px-0 py-4 select-none border-r border-gray-200 min-w-[2rem] overflow-y-auto">
+                              {numberedLines.map((line) => (
+                                <div key={line.number} className="text-center leading-6">
+                                  {line.number}
+                                </div>
+                              ))}
+                            </div>
+                            {/* JSON Content */}
+                            <div className="flex-1 bg-white text-gray-800 px-4 py-4 overflow-auto">
+                              {numberedLines.map((line) => (
+                                <div key={line.number} className="whitespace-pre leading-6">
+                                  {line.content}
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        );
+                      })()
+                    ) : (
+                      <div className="flex text-sm font-mono h-full">
+                        <div className="bg-gray-50 text-gray-500 px-0 py-4 select-none border-r border-gray-200 min-w-[2rem]">
+                          <div className="text-center leading-6">1</div>
+                        </div>
+                        <div className="flex-1 bg-white text-gray-800 px-4 py-4">
+                          <div className="whitespace-pre leading-6">Loading response...</div>
+                        </div>
+                      </div>
+                    )}
                   </div>
-                )}
+                  {sampleResponse && !sampleResponse.error && (
+                    <div className="text-xs text-gray-600 px-4 py-2 border-t border-gray-200 bg-gray-50">
+                      Note: Response has been truncated for display. The actual API returns complete data.
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           </div>
