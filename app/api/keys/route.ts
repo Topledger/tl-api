@@ -33,19 +33,19 @@ export async function GET() {
         data: {
           name: 'Default API Key',
           key: apiKey,
-          description: 'Auto-generated default API key',
+          //description: 'Auto-generated default API key',
           userId: user.id
         }
       });
       
-      console.log(`✅ Auto-generated first API key for user: ${session.user.email}`);
+     
       
       // Return the newly created key
       const cleanApiKeys = [{
         id: newKey.id,
         name: newKey.name,
         key: newKey.key,
-        description: newKey.description,
+        //description: newKey.description,
         createdAt: newKey.createdAt.toISOString().split('T')[0],
         lastUsed: null,
         totalHits: 0,
@@ -60,7 +60,7 @@ export async function GET() {
       id: key.id,
       name: key.name,
       key: key.key,
-      description: key.description,
+      //description: key.description,
       createdAt: key.createdAt.toISOString().split('T')[0],
       lastUsed: key.lastUsed?.toISOString().split('T')[0] || null,
       totalHits: key.totalHits,
