@@ -376,28 +376,28 @@
       "lastLogin": "2025-08-29T13:08:35.562Z"
     },
     "tiwari2010iit_gmail_com": {
-      "id": "111680292063135580990",
+      "id": "cmey8viet0000l604tp4gu7vn",
       "email": "tiwari2010iit@gmail.com",
       "name": "LOKESH TIWARI",
       "image": "https://lh3.googleusercontent.com/a/ACg8ocKq15EJ53r0qcHIpLjARFGqmdlonwEuVc2Q4eazJeVbbzYkBiJP=s96-c",
       "plan": "Basic",
       "credits": {
         "used": 0,
-        "remaining": 44000,
-        "total": 44000
+        "remaining": 5000,
+        "total": 5000
       },
       "billingCycle": {
-        "start": "2025-06-18",
-        "end": "2025-07-18"
+        "start": "2025-08-31",
+        "end": "2025-09-30"
       },
-      "createdAt": "2025-06-18T07:09:45.582Z",
-      "lastLogin": "2025-08-27T23:11:53.844Z"
+      "createdAt": "2025-08-30T12:35:19.925Z",
+      "lastLogin": "2025-08-31T12:10:21.471Z"
     }
   },
   "globalStats": {
     "totalUsers": 3,
     "totalApiCalls": 23150,
     "totalRevenue": 119.96,
-    "lastUpdated": "2025-08-29T13:08:35.563Z"
+    "lastUpdated": "2025-08-31T12:10:21.471Z"
   }
 }
