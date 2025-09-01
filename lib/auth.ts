@@ -108,7 +108,7 @@ async function getOrCreateUser(profile: { sub?: string; email: string; name: str
           name: profile.name,
           picture: profile.picture,
           plan: 'Basic',
-          credits: 5000 // Default credits
+          credits: 30000 // Default credits
         }
       });
 
@@ -185,8 +185,8 @@ function getOrCreateUserFromJSON(profile: { sub?: string; email: string; name: s
       plan: 'Basic',
       credits: {
         used: 0,
-        remaining: 5000, // Updated to 5000 credits
-        total: 5000,
+        remaining: 30000, // Default credits
+        total: 30000,
       },
       billingCycle: {
         start: new Date().toISOString().split('T')[0],
@@ -268,8 +268,8 @@ export const authOptions: NextAuthOptions = {
           console.error('Error getting user session data:', error);
           // Fallback to JSON file
           const database = readUserDatabase();
-          const userKey = session.user.email.replace(/[^a-zA-Z0-9]/g, '_');
-          const userData = database.users[userKey];
+          const userKey = session.user.email?.replace(/[^a-zA-Z0-9]/g, '_');
+          const userData = userKey ? database.users[userKey] : null;
           if (userData) {
             session.user = {
               ...session.user,

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { MagnifyingGlassIcon, ChartBarIcon, ClockIcon, CurrencyDollarIcon } from '@heroicons/react/24/outline';
+import { MagnifyingGlassIcon, ChartBarIcon, ClockIcon, CurrencyDollarIcon, BoltIcon } from '@heroicons/react/24/outline';
 import MainLayout from '@/components/Layout/MainLayout';
 import Button from '@/components/UI/Button';
 import Dropdown from '@/components/UI/Dropdown';
@@ -32,6 +32,7 @@ interface ApiStats {
     totalCredits: number;
     avgCallsPerDay: number;
     avgCreditsPerDay: number;
+    avgResponseTime: number;
   };
 }
 
@@ -173,7 +174,7 @@ export default function TrackingPage() {
       <div className="space-y-6">
         {/* Statistics Cards */}
         {apiStats && (
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="bg-white rounded-sm border border-gray-200 p-6">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
@@ -188,7 +189,7 @@ export default function TrackingPage() {
               </div>
             </div>
 
-            <div className="bg-white rounded-sm border border-gray-200 p-6">
+           {/* <div className="bg-white rounded-sm border border-gray-200 p-6">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
                   <CurrencyDollarIcon className="h-8 w-8 text-amber-600" />
@@ -200,7 +201,7 @@ export default function TrackingPage() {
                   </dl>
                 </div>
               </div>
-            </div>
+            </div> */}
 
             <div className="bg-white rounded-sm border border-gray-200 p-6">
               <div className="flex items-center">
@@ -218,7 +219,7 @@ export default function TrackingPage() {
               </div>
             </div>
 
-            <div className="bg-white rounded-sm border border-gray-200 p-6">
+            {/* <div className="bg-white rounded-sm border border-gray-200 p-6">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
                   <ChartBarIcon className="h-8 w-8 text-orange-600" />
@@ -228,6 +229,22 @@ export default function TrackingPage() {
                     <dt className="text-sm font-medium text-gray-500 truncate">Avg Credits/Day</dt>
                     <dd className="text-lg font-medium text-gray-900">
                       {apiStats.monthlyStats?.avgCreditsPerDay?.toFixed(0) || Math.round(apiStats.totalCalls / 30)}
+                    </dd>
+                  </dl>
+                </div>
+              </div>
+            </div> */}
+
+            <div className="bg-white rounded-sm border border-gray-200 p-6">
+              <div className="flex items-center">
+                <div className="flex-shrink-0">
+                  <BoltIcon className="h-8 w-8 text-green-600" />
+                </div>
+                <div className="ml-5 w-0 flex-1">
+                  <dl>
+                    <dt className="text-sm font-medium text-gray-500 truncate">Avg Response Time</dt>
+                    <dd className="text-lg font-medium text-gray-900">
+                      {apiStats.monthlyStats?.avgResponseTime?.toFixed(0) || '--'}ms
                     </dd>
                   </dl>
                 </div>

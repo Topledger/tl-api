@@ -284,6 +284,19 @@ export async function getApiUsageStats({
   const avgCallsPerDay = monthlyCalls / 30;
   const avgCreditsPerDay = monthlyCredits / 30;
 
+  // Calculate average response time for the month
+  const monthlyResponseTimeData = await prisma.apiLog.aggregate({
+    where: {
+      ...monthlyWhere,
+      responseTime: { not: null }
+    },
+    _avg: {
+      responseTime: true
+    }
+  });
+  
+  const avgResponseTime = monthlyResponseTimeData._avg.responseTime || 0;
+
   return {
     totalCalls,
     successRate: totalCalls > 0 ? (successfulCalls / totalCalls) * 100 : 0,
@@ -296,7 +309,8 @@ export async function getApiUsageStats({
       totalCalls: monthlyCalls,
       totalCredits: monthlyCredits,
       avgCallsPerDay,
-      avgCreditsPerDay
+      avgCreditsPerDay,
+      avgResponseTime
     }
   };
 }

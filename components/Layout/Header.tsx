@@ -83,7 +83,7 @@ export default function Header({ title, breadcrumbs, onMenuClick }: HeaderProps)
           <div className="flex items-center space-x-4">
             {session ? (
               <>
-                {/* Credits Display */}
+                {/* Credits Display 
                 {displayUser?.credits && (
                   <div className="hidden sm:flex items-center space-x-2 bg-gray-50 px-3 py-0 rounded-lg">
                     <div className="text-sm">
@@ -94,7 +94,7 @@ export default function Header({ title, breadcrumbs, onMenuClick }: HeaderProps)
                       
                     </div>
                   </div>
-                )}
+                )}*/}
 
                 {/* User Dropdown */}
                 <div className="relative">
