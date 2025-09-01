@@ -33,6 +33,7 @@ interface WrappedApi {
   wrapperUrl: string;
   menuName: string;
   pageName: string;
+  page: string; // Added: needed for project filtering
   method: string;
   originalUrl: string;
   responseColumns?: Array<{
@@ -89,6 +90,7 @@ export async function GET() {
         wrapperUrl: wrapperPath,
         menuName: api.menuName,
         pageName: api.pageName,
+        page: api.page, // Added: pass through the page field for project filtering
         method: 'GET', // Most Top Ledger APIs are GET, but can handle POST too
         originalUrl: api.endpoint,
         responseColumns: api.responseColumns,

@@ -16,6 +16,7 @@ interface ApiItem {
   wrapperUrl: string;
   menuName: string;
   pageName: string;
+  page?: string; // Added: for project-apitype pattern like "metaplex-traction"
   method: string;
   originalUrl: string;
   responseColumns?: Array<{
@@ -37,12 +38,15 @@ export default function ExplorePage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedMenuName, setSelectedMenuName] = useState('');
   const [selectedPageName, setSelectedPageName] = useState('');
+  const [selectedProject, setSelectedProject] = useState(''); // New: for project selection
+  const [selectedApiType, setSelectedApiType] = useState(''); // New: for API type selection
   const [selectedApiKey, setSelectedApiKey] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [apiData, setApiData] = useState<ApiData | null>(null);
   const [apiKeys, setApiKeys] = useState<any[]>([]);
   const [menuNames, setMenuNames] = useState<string[]>([]);
   const [pageNames, setPageNames] = useState<string[]>([]);
+  const [projectNames, setProjectNames] = useState<string[]>([]); // New: for project names
   const [selectedApi, setSelectedApi] = useState<ApiItem | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [showApiKeyDropdown, setShowApiKeyDropdown] = useState(false);
@@ -81,8 +85,41 @@ export default function ExplorePage() {
         const uniqueMenuNames = [...new Set(data.apis.map((api: any) => api.menuName as string))].sort();
         const uniquePageNames = [...new Set(data.apis.map((api: any) => api.pageName as string))].sort();
         
+        // Extract unique project names from "page" field for Projects category
+        const projectsApis = data.apis.filter((api: any) => api.menuName === 'Projects');
+        console.log('📊 Projects APIs found:', projectsApis.length);
+        console.log('🔍 Sample project API:', projectsApis[0]);
+        
+        const uniqueProjectNames = [...new Set(
+          projectsApis
+            .map((api: any) => {
+              console.log('🎯 Processing page field:', api.page);
+              if (!api.page) return null;
+              
+              // Extract core project name - always take the first part
+              // except for special cases like "sol-strategies"
+              const parts = api.page.split('-');
+              const firstPart = parts[0];
+              
+              // Special case: sol-strategies should be kept together
+              if (firstPart === 'sol' && parts.length > 1 && parts[1] === 'strategies') {
+                return 'sol-strategies';
+              }
+              
+              // For all other cases, just take the first part (core project name)
+              // "metaplex-competitive-landscape" -> "metaplex"
+              // "helium-protocol-traction" -> "helium"
+              // "orca-traction" -> "orca"
+              return firstPart;
+            })
+            .filter(Boolean) // Remove any undefined/empty values
+        )].sort();
+        
+        console.log('📝 Unique project names extracted:', uniqueProjectNames);
+        
         setMenuNames(uniqueMenuNames as string[]);
         setPageNames(uniquePageNames as string[]);
+        setProjectNames(uniqueProjectNames as string[]);
       }
 
       // Load API keys from our API
@@ -103,6 +140,7 @@ export default function ExplorePage() {
       setApiKeys([]);
       setMenuNames([]);
       setPageNames([]);
+      setProjectNames([]);
     } finally {
       setIsLoading(false);
     }
@@ -136,8 +174,31 @@ export default function ExplorePage() {
     );
     
     const matchesMenuName = !selectedMenuName || api.menuName === selectedMenuName;
-    const matchesPageName = !selectedPageName || api.pageName === selectedPageName;
     
+    // For Projects category, use three-level filtering
+    if (selectedMenuName === 'Projects') {
+      let projectName = '';
+      if (api.page) {
+        const parts = api.page.split('-');
+        const firstPart = parts[0];
+        
+        // Special case: sol-strategies should be kept together
+        if (firstPart === 'sol' && parts.length > 1 && parts[1] === 'strategies') {
+          projectName = 'sol-strategies';
+        } else {
+          // For all other cases, just take the first part (core project name)
+          projectName = firstPart;
+        }
+      }
+      
+      const matchesProject = !selectedProject || projectName === selectedProject;
+      const matchesApiType = !selectedApiType || api.pageName === selectedApiType;
+      
+      return matchesSearch && matchesMenuName && matchesProject && matchesApiType;
+    }
+    
+    // For other categories, use regular two-level filtering
+    const matchesPageName = !selectedPageName || api.pageName === selectedPageName;
     return matchesSearch && matchesMenuName && matchesPageName;
   }) : [];
 
@@ -147,10 +208,36 @@ export default function ExplorePage() {
   const endIndex = startIndex + itemsPerPage;
   const paginatedApis = filteredApis.slice(startIndex, endIndex);
 
-  // Get available page names for selected menu (for dependent filtering)
-  const availablePageNames = selectedMenuName 
+  // Get available options based on selections
+  const availablePageNames = selectedMenuName && selectedMenuName !== 'Projects'
     ? [...new Set(apiData?.apis?.filter(api => api.menuName === selectedMenuName).map(api => api.pageName) || [])].sort()
     : pageNames;
+
+  // For Projects category, get available API types for selected project
+  const availableApiTypes = selectedProject
+    ? [...new Set(
+        apiData?.apis
+          ?.filter(api => {
+            if (api.menuName !== 'Projects' || !api.page) return false;
+            
+            // Extract project name using same logic
+            const parts = api.page.split('-');
+            const firstPart = parts[0];
+            let projectName = '';
+            
+            // Special case: sol-strategies should be kept together
+            if (firstPart === 'sol' && parts.length > 1 && parts[1] === 'strategies') {
+              projectName = 'sol-strategies';
+            } else {
+              // For all other cases, just take the first part (core project name)
+              projectName = firstPart;
+            }
+            
+            return projectName === selectedProject;
+          })
+          .map(api => api.pageName) || []
+      )].sort()
+    : [];
 
   // Prepare dropdown options
   const categoryOptions = [
@@ -161,6 +248,16 @@ export default function ExplorePage() {
   const pageOptions = [
     { value: '', label: 'All Subcategories' },
     ...availablePageNames.map(name => ({ value: name, label: name }))
+  ];
+
+  const projectOptions = [
+    { value: '', label: 'All Projects' },
+    ...projectNames.map(name => ({ value: name, label: name.charAt(0).toUpperCase() + name.slice(1) })) // Capitalize first letter
+  ];
+
+  const apiTypeOptions = [
+    { value: '', label: 'All API Types' },
+    ...availableApiTypes.map(name => ({ value: name, label: name }))
   ];
 
   const apiKeyOptions = [
@@ -201,23 +298,58 @@ export default function ExplorePage() {
                   onChange={(value) => {
                     setSelectedMenuName(value);
                     setSelectedPageName(''); // Reset page filter when menu changes
+                    setSelectedProject(''); // Reset project filter
+                    setSelectedApiType(''); // Reset API type filter
                     setCurrentPage(1); // Reset to first page
                   }}
                   placeholder="All Categories"
                   className="w-full sm:w-[200px] lg:w-[200px]"
                 />
                 
-                <Dropdown
-                  options={pageOptions}
-                  value={selectedPageName}
-                  onChange={(value) => {
-                    setSelectedPageName(value);
-                    setCurrentPage(1); // Reset to first page
-                  }}
-                  placeholder={!selectedMenuName ? "Select Category First" : "All Subcategories"}
-                  disabled={!selectedMenuName}
-                  className="w-full sm:w-[200px] lg:w-[200px]"
-                />
+                {/* Show different dropdowns based on selected category */}
+                {selectedMenuName === 'Projects' ? (
+                  <>
+                    {/* Projects Dropdown */}
+                    <Dropdown
+                      options={projectOptions}
+                      value={selectedProject}
+                      onChange={(value) => {
+                        setSelectedProject(value);
+                        setSelectedApiType(''); // Reset API type when project changes
+                        setCurrentPage(1); // Reset to first page
+                      }}
+                      placeholder="All Projects"
+                      className="w-full sm:w-[200px] lg:w-[200px]"
+                    />
+                    
+                    {/* API Type Dropdown - only show when project is selected */}
+                    {selectedProject && (
+                      <Dropdown
+                        options={apiTypeOptions}
+                        value={selectedApiType}
+                        onChange={(value) => {
+                          setSelectedApiType(value);
+                          setCurrentPage(1); // Reset to first page
+                        }}
+                        placeholder="All API Types"
+                        className="w-full sm:w-[200px] lg:w-[200px]"
+                      />
+                    )}
+                  </>
+                ) : (
+                  /* Regular subcategory dropdown for non-Projects categories */
+                  <Dropdown
+                    options={pageOptions}
+                    value={selectedPageName}
+                    onChange={(value) => {
+                      setSelectedPageName(value);
+                      setCurrentPage(1); // Reset to first page
+                    }}
+                    placeholder={!selectedMenuName ? "Select Category First" : "All Subcategories"}
+                    disabled={!selectedMenuName}
+                    className="w-full sm:w-[200px] lg:w-[200px]"
+                  />
+                )}
 
                 <div className="w-full sm:w-[200px] lg:w-[200px] relative dropdown-container">
                   <div className="flex bg-white border border-gray-200 rounded-sm transition-shadow duration-200 overflow-hidden">
