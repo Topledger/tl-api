@@ -11,6 +11,11 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: "Top Ledger APIs",
   description: "Powerful Solana blockchain APIs for developers",
+  icons: {
+    icon: "https://topledger.xyz/favicon.svg",
+    shortcut: "https://topledger.xyz/favicon.svg",
+    apple: "https://topledger.xyz/favicon.svg",
+  },
 };
 
 export default function RootLayout({
