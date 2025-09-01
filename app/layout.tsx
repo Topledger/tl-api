@@ -12,9 +12,9 @@ export const metadata: Metadata = {
   title: "Top Ledger APIs",
   description: "Powerful Solana blockchain APIs for developers",
   icons: {
-    icon: "https://topledger.xyz/favicon.svg",
-    shortcut: "https://topledger.xyz/favicon.svg",
-    apple: "https://topledger.xyz/favicon.svg",
+    icon: "https://api.topledger.xyz/favicon.svg",
+    shortcut: "https://api.topledger.xyz/favicon.svg",
+    apple: "https://api.topledger.xyz/favicon.svg",
   },
 };
 
