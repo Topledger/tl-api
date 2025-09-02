@@ -77,7 +77,7 @@ export default function SignInPage() {
           <div className="text-center mb-6">
             <h1 className="text-lg font-semibold text-gray-700 mb-2">Top Ledger APIs</h1>
             <p className="text-gray-500 text-sm leading-relaxed">
-              Access powerful Solana blockchain APIs with your Google account
+            Power your apps with TopLedger’s Solana data APIs
             </p>
           </div>
 
