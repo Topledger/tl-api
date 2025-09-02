@@ -104,7 +104,7 @@ export default function SignInPage() {
             </button>
           </div>
 
-          {/* Footer */}
+          {/* Footer 
           <div className="mt-6 text-center">
             <p className="text-xs text-gray-500 leading-relaxed">
               By signing in, you agree to our{' '}
@@ -112,7 +112,7 @@ export default function SignInPage() {
               {' '}and{' '}
               <span className="text-gray-700 hover:underline cursor-pointer">Privacy Policy</span>
             </p>
-          </div>
+          </div>*/}
         </div>
       </div>
     </div>
