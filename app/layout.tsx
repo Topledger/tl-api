@@ -33,7 +33,7 @@ export const metadata: Metadata = {
     siteName: "Top Ledger APIs",
     images: [
       {
-        url: "/tlapis.png",
+        url: "https://api.topledger.xyz/tlapis.png",
         width: 1200,
         height: 630,
         alt: "Top Ledger APIs - Solana Blockchain Developer Tools",
