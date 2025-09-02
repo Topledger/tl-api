@@ -45,6 +45,11 @@ const addLineNumbers = (code: string) => {
   }));
 };
 
+// Helper function to shorten URL
+const shortenUrl = (url: string) => {
+  return url.length > 50 ? url.slice(0, 90) + '...' : url;
+};
+
 // Tabs component for usage examples
 const UsageExamplesTabs: React.FC<{
   curlExample: string;
@@ -279,9 +284,12 @@ const ApiDetailsModal: React.FC<ApiDetailsModalProps> = ({
         <div>
           <h4 className="font-semibold text-gray-900 mb-3">API Endpoint</h4>
           <div className="relative">
-            <code className="block bg-gray-900 text-green-400 p-4 rounded-sm text-sm overflow-x-auto">
-              {fullEndpointUrl}
-            </code>
+          <code
+      className="block bg-gray-900 text-green-400 p-3 rounded-sm text-sm overflow-hidden whitespace-nowrap"
+      title={fullEndpointUrl} // full URL on hover
+    >
+      {shortenUrl(fullEndpointUrl)}
+    </code>
             <Button
               variant="outline"
               size="sm"
