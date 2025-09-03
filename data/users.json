@@ -33,12 +33,29 @@
       },
       "createdAt": "2025-09-03T11:01:27.961Z",
       "lastLogin": "2025-09-03T11:01:28.593Z"
+    },
+    "T14SjkAr5Tc2oRaey9J8kgMau4VbdNqJidZrTPXgcNu_solana_wallet": {
+      "id": "solana_1756906669186",
+      "email": "T14SjkAr5Tc2oRaey9J8kgMau4VbdNqJidZrTPXgcNu@solana.wallet",
+      "name": "Solana User (T14SjkAr...)",
+      "plan": "Basic",
+      "credits": {
+        "used": 0,
+        "remaining": 30000,
+        "total": 30000
+      },
+      "billingCycle": {
+        "start": "2025-09-03",
+        "end": "2025-10-03"
+      },
+      "createdAt": "2025-09-03T13:37:49.186Z",
+      "lastLogin": "2025-09-03T13:45:32.056Z"
     }
   },
   "globalStats": {
-    "totalUsers": 2,
+    "totalUsers": 3,
     "totalApiCalls": 0,
     "totalRevenue": 0,
-    "lastUpdated": "2025-09-03T11:10:54.708Z"
+    "lastUpdated": "2025-09-03T13:37:49.186Z"
   }
 }

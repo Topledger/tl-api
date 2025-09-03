@@ -7,6 +7,7 @@ declare module 'next-auth' {
       name?: string | null;
       email?: string | null;
       image?: string | null;
+      publicKey?: string; // Solana wallet public key
       plan?: string;
       credits?: {
         used: number;
@@ -22,6 +23,7 @@ declare module 'next-auth' {
 
   interface User {
     id: string;
+    publicKey?: string; // Solana wallet public key
     plan?: string;
     credits?: {
       used: number;

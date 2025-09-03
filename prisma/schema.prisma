@@ -16,6 +16,7 @@ model User {
   email       String   @unique
   name        String
   picture     String?
+  publicKey   String?  @unique  // Solana wallet public key
   plan        String   @default("Basic")
   credits     Int      @default(5000)
   createdAt   DateTime @default(now())
