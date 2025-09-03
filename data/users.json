@@ -16,13 +16,29 @@
         "end": "2025-10-03"
       },
       "createdAt": "2025-08-30T12:34:32.964Z",
-      "lastLogin": "2025-09-03T08:53:00.823Z"
+      "lastLogin": "2025-09-03T11:10:54.708Z"
+    },
+    "urluckyturtle_gmail_com": {
+      "id": "user_1756897287961",
+      "email": "urluckyturtle@gmail.com",
+      "plan": "Basic",
+      "credits": {
+        "used": 0,
+        "remaining": 30000,
+        "total": 30000
+      },
+      "billingCycle": {
+        "start": "2025-09-03",
+        "end": "2025-10-03"
+      },
+      "createdAt": "2025-09-03T11:01:27.961Z",
+      "lastLogin": "2025-09-03T11:01:28.593Z"
     }
   },
   "globalStats": {
-    "totalUsers": 1,
+    "totalUsers": 2,
     "totalApiCalls": 0,
     "totalRevenue": 0,
-    "lastUpdated": "2025-09-03T08:53:00.824Z"
+    "lastUpdated": "2025-09-03T11:10:54.708Z"
   }
 }

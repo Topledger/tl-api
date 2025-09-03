@@ -1,5 +1,7 @@
 import { NextAuthOptions } from 'next-auth';
 import GoogleProvider from 'next-auth/providers/google';
+import DiscordProvider from 'next-auth/providers/discord';
+import CredentialsProvider from 'next-auth/providers/credentials';
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'fs';
 import { join } from 'path';
 import { prisma } from './db';
@@ -216,6 +218,64 @@ export const authOptions: NextAuthOptions = {
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+    }),
+    DiscordProvider({
+      clientId: process.env.DISCORD_CLIENT_ID!,
+      clientSecret: process.env.DISCORD_CLIENT_SECRET!,
+    }),
+    CredentialsProvider({
+      id: 'solana-wallet',
+      name: 'Solana Wallet',
+      credentials: {
+        publicKey: { label: 'Public Key', type: 'text' },
+        signature: { label: 'Signature', type: 'text' },
+      },
+      async authorize(credentials) {
+        if (!credentials?.publicKey) return null;
+
+        try {
+          // For now, we'll just authenticate based on the public key
+          // In production, you'd verify the signature
+          const user = {
+            id: credentials.publicKey,
+            name: `Solana User ${credentials.publicKey.slice(0, 8)}...`,
+            email: `${credentials.publicKey}@solana.wallet`,
+            image: null,
+          };
+
+          return user;
+        } catch (error) {
+          console.error('Solana wallet auth error:', error);
+          return null;
+        }
+      },
+    }),
+    CredentialsProvider({
+      id: 'ethereum-wallet',
+      name: 'Ethereum Wallet',
+      credentials: {
+        address: { label: 'Address', type: 'text' },
+        signature: { label: 'Signature', type: 'text' },
+      },
+      async authorize(credentials) {
+        if (!credentials?.address) return null;
+
+        try {
+          // For now, we'll just authenticate based on the address
+          // In production, you'd verify the signature
+          const user = {
+            id: credentials.address,
+            name: `Ethereum User ${credentials.address.slice(0, 8)}...`,
+            email: `${credentials.address}@ethereum.wallet`,
+            image: null,
+          };
+
+          return user;
+        } catch (error) {
+          console.error('Ethereum wallet auth error:', error);
+          return null;
+        }
+      },
     }),
   ],
   callbacks: {

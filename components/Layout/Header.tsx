@@ -5,6 +5,8 @@ import { useSession, signOut } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { ChevronDownIcon, ChevronRightIcon, Bars3Icon } from '@heroicons/react/24/outline';
 import { useAppStore } from '@/lib/store';
+import { useWallet } from '@solana/wallet-adapter-react';
+import { useDisconnect } from 'wagmi';
 
 interface BreadcrumbItem {
   label: string;
@@ -22,8 +24,20 @@ export default function Header({ title, breadcrumbs, onMenuClick }: HeaderProps)
   const { data: session } = useSession();
   const router = useRouter();
   const { user } = useAppStore();
+  
+  // Wallet hooks for disconnection
+  const { disconnect: disconnectSolana } = useWallet();
+  const { disconnect: disconnectEthereum } = useDisconnect();
 
   const handleSignOut = async () => {
+    try {
+      await disconnectSolana();
+      await disconnectEthereum();
+    } catch (error) {
+      // Ignore wallet disconnection errors
+    }
+    
+    localStorage.setItem('manualSignOut', 'true');
     await signOut({ callbackUrl: '/auth/signin' });
   };
 
