@@ -105,13 +105,24 @@ export default function Header({ title, breadcrumbs, onMenuClick }: HeaderProps)
                     onMouseEnter={() => setShowDropdown(true)}
                     
                   >
-                    <img
-                      className="h-8 w-8 rounded-full"
-                      src={session.user?.image || '/default-avatar.png'}
-                      alt="User avatar"
-                    />
+                    {session.user?.image ? (
+                      <img
+                        className="h-8 w-8 rounded-full"
+                        src={session.user.image}
+                        alt="User avatar"
+                        onError={(e) => {
+                          e.currentTarget.style.display = 'none';
+                          e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                        }}
+                      />
+                    ) : null}
+                    <div className={`h-8 w-8 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center text-white font-medium text-sm ${session.user?.image ? 'hidden' : ''}`}>
+                      {session.user?.name?.charAt(0)?.toUpperCase() || session.user?.email?.charAt(0)?.toUpperCase() || 'U'}
+                    </div>
                     <span className="hidden sm:block font-medium text-gray-700">
-                      {session.user?.name}
+                      {session.user?.name?.includes('Solana User') 
+                        ? `${session.user?.email?.slice(0, 8)}...` 
+                        : session.user?.name}
                     </span>
                     <ChevronDownIcon className="h-4 w-4 text-gray-400" />
                   </button>
@@ -120,8 +131,16 @@ export default function Header({ title, breadcrumbs, onMenuClick }: HeaderProps)
                     
                     <div  onMouseLeave={() => setShowDropdown(false)} className="absolute right-0 mt-2 w-48 rounded-md shadow-lg py-1 bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-50">
                       <div className="px-4 py-2 text-sm text-gray-700 border-b border-gray-200">
-                        <p className="font-medium">{session.user?.name}</p>
-                        <p className="text-gray-500">{session.user?.email}</p>
+                        <p className="font-medium truncate">
+                          {session.user?.name?.includes('Solana User') 
+                            ? `${session.user?.email?.slice(0, 8)}...${session.user?.email?.slice(-4)}` 
+                            : session.user?.name}
+                        </p>
+                        <p className="text-gray-500 text-xs truncate">
+                          {session.user?.email?.includes('@solana.wallet') 
+                            ? 'Solana Wallet' 
+                            : session.user?.email}
+                        </p>
                       </div>
                       <button
                         

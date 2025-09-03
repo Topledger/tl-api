@@ -460,7 +460,7 @@ export async function getOrCreateSolanaUser(publicKey: string): Promise<UserData
       user = await prisma.user.create({
         data: {
           email: solanaEmail,
-          name: `Solana User (${publicKey.slice(0, 8)}...)`,
+          name: `(${publicKey.slice(0, 8)}...)`,
           publicKey: publicKey,
           plan: 'Basic',
           credits: 30000 // Default credits
@@ -535,7 +535,7 @@ function getOrCreateSolanaUserFromJSON(publicKey: string): UserData {
     user = {
       id: `solana_${Date.now()}`,
       email: solanaEmail,
-      name: `Solana User (${publicKey.slice(0, 8)}...)`,
+      name: `(${publicKey.slice(0, 8)}...)`,
       image: undefined,
       plan: 'Basic',
       credits: {
