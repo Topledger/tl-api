@@ -13,7 +13,9 @@ function PrivacyContent() {
       <div className="px-8 py-8">
           {/* Header Section */}
           <div className="mb-8">
-            <p className="text-sm text-gray-600 leading-relaxed max-w-5xl">
+            <h4 className="text-xl font-semibold text-gray-700 mb-3">Privacy Policy</h4>
+            <hr className="mb-4 border-gray-200" />
+            <p className="text-sm text-gray-600 leading-relaxed max-w-9xl">
               Thank you for choosing Top Ledger. By using our website, engaging with our services, or accessing our software-as-a-service (SaaS) offerings, you agree to the practices described in this policy. If you're representing an organization, your agreement confirms you're authorized to bind your entity and its users to these terms. If you lack such authority, or if you disagree with any part of these terms, you will not be able to access our services.
             </p>
             <hr className="mt-8 border-gray-200" />

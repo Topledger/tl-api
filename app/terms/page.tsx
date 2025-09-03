@@ -13,8 +13,9 @@ function TermsContent() {
       <div className="px-8 py-8">
           {/* Header Section */}
           <div className="mb-8">
-            
-            <p className="text-sm text-gray-600 leading-relaxed max-w-5xl">
+            <h4 className="text-xl font-semibold text-gray-700 mb-3">Terms of Service</h4>
+            <hr className="mb-4 border-gray-200" />
+            <p className="text-sm text-gray-600 leading-relaxed max-w-9xl">
               These Terms and Conditions ("Terms") govern your access to and use of the TopLedger.xyz website and services (collectively, the "Services"). By accessing or using our Services, you agree to be bound by these Terms. If you do not agree with any part of these Terms, you must not use our Services.
             </p>
             <hr className="mt-8 border-gray-200" />
