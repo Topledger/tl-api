@@ -4,6 +4,7 @@ import { signIn, getSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import Button from '@/components/UI/Button';
+import Footer from '@/components/Layout/Footer';
 
 export default function SignInPage() {
   const router = useRouter();
@@ -35,7 +36,8 @@ export default function SignInPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-100 flex items-center justify-center p-4 relative overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-100 flex flex-col relative overflow-hidden">
+      <div className="flex-1 flex items-center justify-center p-4">
       {/* Abstract Background Objects */}
       <div className="absolute inset-0 overflow-hidden">
         {/* Large floating shapes */}
@@ -104,17 +106,20 @@ export default function SignInPage() {
             </button>
           </div>
 
-          {/* Footer 
+          {/* Footer */}
           <div className="mt-6 text-center">
             <p className="text-xs text-gray-500 leading-relaxed">
               By signing in, you agree to our{' '}
-              <span className="text-gray-700 hover:underline cursor-pointer">Terms of Service</span>
+              <span className="text-gray-700 hover:underline cursor-pointer" onClick={() => router.push('/terms?noLayout=true')}>Terms of Service</span>
               {' '}and{' '}
-              <span className="text-gray-700 hover:underline cursor-pointer">Privacy Policy</span>
+              <span className="text-gray-700 hover:underline cursor-pointer" onClick={() => router.push('/privacy?noLayout=true')} >Privacy Policy</span>
             </p>
-          </div>*/}
+          </div>
         </div>
       </div>
+      </div>
+      
+      <Footer />
     </div>
   );
 } 

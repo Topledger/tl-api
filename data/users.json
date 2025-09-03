@@ -1,0 +1,28 @@
+{
+  "users": {
+    "ur_lucky_turtle_gmail_com": {
+      "id": "cmey8ui6b0009jr04pxq8fjl6",
+      "email": "ur.lucky.turtle@gmail.com",
+      "name": "Lokesh Tiwari",
+      "image": "https://lh3.googleusercontent.com/a/ACg8ocKDLf6BNuHBrBMJ7N-3hLlYWtEvukXc2CaFI3fbOYdt-6xSaI8=s96-c",
+      "plan": "Basic",
+      "credits": {
+        "used": 0,
+        "remaining": 29999,
+        "total": 29999
+      },
+      "billingCycle": {
+        "start": "2025-09-03",
+        "end": "2025-10-03"
+      },
+      "createdAt": "2025-08-30T12:34:32.964Z",
+      "lastLogin": "2025-09-03T08:26:20.694Z"
+    }
+  },
+  "globalStats": {
+    "totalUsers": 1,
+    "totalApiCalls": 0,
+    "totalRevenue": 0,
+    "lastUpdated": "2025-09-03T08:26:20.695Z"
+  }
+}

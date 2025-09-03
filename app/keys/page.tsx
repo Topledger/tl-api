@@ -173,8 +173,8 @@ export default function ApiKeysPage() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">API Keys</h1>
-            <p className="text-sm text-gray-500">
+            
+            <p className="text-sm text-gray-500 leading-relaxed">
               Manage your API keys for accessing Top Ledger APIs. Each key provides secure access to all available endpoints.
             </p>
           </div>
@@ -330,11 +330,12 @@ export default function ApiKeysPage() {
       <Modal
         isOpen={isDeleteModalOpen}
         onClose={closeDeleteModal}
-        title="Delete API Key"
+        title="Are you sure?"
       >
         <div className="p-6 space-y-4">
-          <p className="text-gray-600">
-            Are you sure you want to delete this API key? This action cannot be undone and will immediately revoke access for any applications using this key.
+          <p className="text-gray-600 text-sm leading-relaxed">
+            
+            This action cannot be undone and will immediately revoke access for any applications using this key.
           </p>
           <div className="flex justify-end space-x-3">
             <Button
