@@ -2,8 +2,6 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import SessionProvider from "@/components/Providers/SessionProvider";
-import { SolanaWalletProvider } from "@/components/Providers/WalletProvider";
-import { EthereumProvider } from "@/components/Providers/EthereumProvider";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -76,13 +74,9 @@ export default function RootLayout({
   return (
     <html lang="en" className="h-full">
       <body className={`${inter.variable} font-sans antialiased h-full`}>
-        <EthereumProvider>
-          <SolanaWalletProvider>
-            <SessionProvider>
-              {children}
-            </SessionProvider>
-          </SolanaWalletProvider>
-        </EthereumProvider>
+        <SessionProvider>
+          {children}
+        </SessionProvider>
       </body>
     </html>
   );

@@ -3,9 +3,6 @@
 import { signIn, getSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { useWallet } from '@solana/wallet-adapter-react';
-import { useWalletModal } from '@solana/wallet-adapter-react-ui';
-import { useConnect, useAccount } from 'wagmi';
 import Button from '@/components/UI/Button';
 import Footer from '@/components/Layout/Footer';
 
@@ -13,16 +10,6 @@ export default function SignInPage() {
   const router = useRouter();
   const [googleLoading, setGoogleLoading] = useState(false);
   const [discordLoading, setDiscordLoading] = useState(false);
-  const [solanaLoading, setSolanaLoading] = useState(false);
-  const [ethereumLoading, setEthereumLoading] = useState(false);
-  
-  // Solana wallet hooks
-  const { wallets: solanaWallets, publicKey: solanaPublicKey, disconnect: disconnectSolana, connected, connecting, select, connect, wallet } = useWallet();
-  const { setVisible } = useWalletModal();
-  
-  // Ethereum wallet hooks
-  const { connect: connectEthereum, connectors } = useConnect();
-  const { address: ethereumAddress, isConnected } = useAccount();
 
   useEffect(() => {
     // Check if user is already signed in
@@ -35,77 +22,8 @@ export default function SignInPage() {
     checkSession();
   }, [router]);
 
-  // Handle Solana wallet connection
-  useEffect(() => {
-    if (solanaPublicKey && connected) {
-      // Check if user manually signed out to prevent auto-login
-      const manualSignOut = localStorage.getItem('manualSignOut');
-      if (manualSignOut === 'true') {
-        setSolanaLoading(false);
-        return;
-      }
-      
-      // Clear loading state and proceed with auth
-      setSolanaLoading(false);
-      handleSolanaAuth(solanaPublicKey.toString());
-    }
-  }, [solanaPublicKey, connected]);
-
-  // Handle Ethereum wallet connection  
-  useEffect(() => {
-    if (isConnected && ethereumAddress) {
-      // Check if user manually signed out to prevent auto-login
-      const manualSignOut = localStorage.getItem('manualSignOut');
-      if (manualSignOut === 'true') {
-        setEthereumLoading(false);
-        return;
-      }
-      
-      handleEthereumAuth(ethereumAddress);
-    }
-  }, [isConnected, ethereumAddress]);
-
-  const handleSolanaAuth = async (publicKey: string) => {
-    try {
-      const result = await signIn('solana-wallet', {
-        publicKey: publicKey,
-        signature: 'temp-signature',
-        callbackUrl: '/'
-      });
-      
-      if (result?.error) {
-        alert('Authentication failed');
-      }
-    } catch (error) {
-      alert('Authentication failed');
-    } finally {
-      setSolanaLoading(false);
-    }
-  };
-
-  const handleEthereumAuth = async (address: string) => {
-    try {
-      const result = await signIn('ethereum-wallet', {
-        address: address,
-        signature: 'temp-signature',
-        callbackUrl: '/'
-      });
-      
-      if (result?.error) {
-        alert('Authentication failed');
-      }
-    } catch (error) {
-      alert('Authentication failed');
-    } finally {
-      setEthereumLoading(false);
-    }
-  };
-
   const handleGoogleSignIn = async () => {
     setGoogleLoading(true);
-    // Clear manual sign out flag since user is deliberately signing in
-    localStorage.removeItem('manualSignOut');
-    
     try {
       const result = await signIn('google', { callbackUrl: '/' });
       if (result?.error) {
@@ -120,9 +38,6 @@ export default function SignInPage() {
 
   const handleDiscordSignIn = async () => {
     setDiscordLoading(true);
-    // Clear manual sign out flag since user is deliberately signing in
-    localStorage.removeItem('manualSignOut');
-    
     try {
       const result = await signIn('discord', { callbackUrl: '/' });
       if (result?.error) {
@@ -132,47 +47,6 @@ export default function SignInPage() {
       console.error('Sign in error:', error);
     } finally {
       setDiscordLoading(false);
-    }
-  };
-
-  const handleSolanaWalletConnect = async () => {
-    setSolanaLoading(true);
-    localStorage.removeItem('manualSignOut');
-    
-    try {
-      if (solanaPublicKey) {
-        handleSolanaAuth(solanaPublicKey.toString());
-        return;
-      }
-      
-      const phantomWallet = solanaWallets.find(wallet => wallet.adapter.name === 'Phantom');
-      if (phantomWallet) {
-        select(phantomWallet.adapter.name);
-        await connect();
-      } else {
-        alert('Phantom wallet not found. Please install Phantom wallet.');
-        setSolanaLoading(false);
-      }
-    } catch (error) {
-      setSolanaLoading(false);
-    }
-  };
-
-  const handleEthereumWalletConnect = async () => {
-    setEthereumLoading(true);
-    localStorage.removeItem('manualSignOut');
-    
-    try {
-      const metaMaskConnector = connectors.find(connector => connector.name === 'MetaMask');
-      if (metaMaskConnector) {
-        await connectEthereum({ connector: metaMaskConnector });
-      } else {
-        alert('MetaMask not found. Please install MetaMask.');
-        setEthereumLoading(false);
-      }
-    } catch (error) {
-      alert('Failed to connect to Ethereum wallet');
-      setEthereumLoading(false);
     }
   };
 
@@ -226,10 +100,9 @@ export default function SignInPage() {
 
           {/* Sign In Buttons */}
           <div className="space-y-3">
-            {/* Social Login Buttons */}
             <button
               onClick={handleGoogleSignIn}
-              disabled={googleLoading || discordLoading || solanaLoading || ethereumLoading}
+              disabled={googleLoading || discordLoading}
               className="w-full bg-gray-900 text-white py-3 px-4 rounded-sm font-medium hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
             >
               {googleLoading ? (
@@ -249,7 +122,7 @@ export default function SignInPage() {
 
             <button
               onClick={handleDiscordSignIn}
-              disabled={googleLoading || discordLoading || solanaLoading || ethereumLoading}
+              disabled={googleLoading || discordLoading}
               className="w-full bg-[#5865F2] text-white py-3 px-4 rounded-sm font-medium hover:bg-[#4752C4] focus:outline-none focus:ring-2 focus:ring-[#5865F2] focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
             >
               {discordLoading ? (
@@ -260,51 +133,6 @@ export default function SignInPage() {
                     <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515a.074.074 0 0 0-.079.037c-.211.375-.445.864-.608 1.25a18.27 18.27 0 0 0-5.487 0a12.64 12.64 0 0 0-.617-1.25a.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057a19.9 19.9 0 0 0 5.993 3.03a.078.078 0 0 0 .084-.028a14.09 14.09 0 0 0 1.226-1.994a.076.076 0 0 0-.041-.106a13.107 13.107 0 0 1-1.872-.892a.077.077 0 0 1-.008-.128a10.2 10.2 0 0 0 .372-.292a.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127a12.299 12.299 0 0 1-1.873.892a.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028a19.839 19.839 0 0 0 6.002-3.03a.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419c0-1.333.956-2.419 2.157-2.419c1.21 0 2.176 1.096 2.157 2.42c0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419c0-1.333.955-2.419 2.157-2.419c1.21 0 2.176 1.096 2.157 2.42c0 1.333-.946 2.418-2.157 2.418z"/>
                   </svg>
                   Continue with Discord
-                </>
-              )}
-            </button>
-
-            {/* Divider */}
-            <div className="relative my-4">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-300" />
-              </div>
-              <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-white px-2 text-gray-500">Or connect wallet</span>
-              </div>
-            </div>
-
-            {/* Wallet Login Buttons */}
-            <button
-              onClick={handleSolanaWalletConnect}
-              disabled={googleLoading || discordLoading || solanaLoading || ethereumLoading}
-              className="w-full bg-gradient-to-r from-[#9945FF] to-[#14F195] text-white py-3 px-4 rounded-sm font-medium hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-[#9945FF] focus:ring-offset-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
-            >
-              {solanaLoading ? (
-                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-              ) : (
-                <>
-                  <svg className="w-5 h-5 mr-3" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M7.4 4.9c.2-.2.4-.3.7-.3h13.5c.6 0 .9.7.5 1.1l-3.9 3.9c-.2.2-.4.3-.7.3H3.5c-.6 0-.9-.7-.5-1.1L7.4 4.9zm0 6.4c.2-.2.4-.3.7-.3h13.5c.6 0 .9.7.5 1.1l-3.9 3.9c-.2.2-.4.3-.7.3H3.5c-.6 0-.9-.7-.5-1.1l4.4-3.9zm9.5 6.4c-.2.2-.4.3-.7.3H2.7c-.6 0-.9-.7-.5-1.1l3.9-3.9c.2-.2.4-.3.7-.3h13.5c.6 0 .9.7.5 1.1l-3.9 3.9z"/>
-                  </svg>
-                  Connect Solana Wallet
-                </>
-              )}
-            </button>
-
-            <button
-              onClick={handleEthereumWalletConnect}
-              disabled={googleLoading || discordLoading || solanaLoading || ethereumLoading}
-              className="w-full bg-[#627EEA] text-white py-3 px-4 rounded-sm font-medium hover:bg-[#5A6FDD] focus:outline-none focus:ring-2 focus:ring-[#627EEA] focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
-            >
-              {ethereumLoading ? (
-                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-              ) : (
-                <>
-                  <svg className="w-5 h-5 mr-3" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M11.944 17.97L4.58 13.62 11.943 24l7.37-10.38-7.372 4.35h.003zM12.056 0L4.69 12.223l7.365 4.354 7.365-4.35L12.056 0z"/>
-                  </svg>
-                  Connect Ethereum Wallet
                 </>
               )}
             </button>
