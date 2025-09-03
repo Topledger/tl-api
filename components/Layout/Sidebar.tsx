@@ -19,7 +19,6 @@ const navigation = [
   //{ name: 'Pricing', href: '/plans', icon: CurrencyDollarIcon },
   //{ name: 'Usage & Billing history', href: '/usage', icon: ChartBarIcon },
   //{ name: 'Settings', href: '/settings', icon: CogIcon },
-    //{ name: 'Docs', href: '/docs', icon: DocumentTextIcon },
     { name: 'Usage', href: '/usage', icon: ChartBarIcon },
  
 ];
