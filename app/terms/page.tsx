@@ -1,9 +1,10 @@
 'use client';
 
+import { Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import MainLayout from '@/components/Layout/MainLayout';
 
-export default function TermsPage() {
+function TermsContent() {
   const searchParams = useSearchParams();
   const noLayout = searchParams?.get('noLayout') === 'true';
 
@@ -201,6 +202,7 @@ export default function TermsPage() {
       </div>
     );
 
+  // Return layout based on context
   if (noLayout) {
     return (
       <div className="min-h-screen bg-gray-50">
@@ -227,9 +229,18 @@ export default function TermsPage() {
     );
   }
 
+  // Default: full layout with sidebar
   return (
     <MainLayout title="Terms and Conditions">
       {content}
     </MainLayout>
+  );
+}
+
+export default function TermsPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading...</div>}>
+      <TermsContent />
+    </Suspense>
   );
 }
