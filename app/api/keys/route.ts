@@ -4,9 +4,10 @@ import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/db';
 
 export async function GET() {
+  let session;
   try {
     // Check authentication
-    const session = await getServerSession(authOptions);
+    session = await getServerSession(authOptions);
     if (!session?.user?.email) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -19,7 +20,9 @@ export async function GET() {
       update: {},
       create: {
         email: session.user.email,
-        name: session.user.name || 'Unknown User'
+        name: session.user.name || 'Unknown User',
+        credits: 30000,
+        picture: session.user.image || null
       },
       include: { apiKeys: true }
     });
@@ -70,7 +73,15 @@ export async function GET() {
 
   } catch (error) {
     console.error('❌ Error fetching API keys:', error);
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+    console.error('Error details:', {
+      message: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : 'No stack trace',
+      session: session?.user?.email || 'No session'
+    });
+    return NextResponse.json({ 
+      error: 'Internal Server Error', 
+      details: error instanceof Error ? error.message : 'Unknown error'
+    }, { status: 500 });
   }
 }
 
@@ -99,7 +110,9 @@ export async function POST(request: Request) {
       update: {},
       create: {
         email: session.user.email,
-        name: session.user.name || 'Unknown User'
+        name: session.user.name || 'Unknown User',
+        credits: 30000,
+        picture: session.user.image || null
       }
     });
 

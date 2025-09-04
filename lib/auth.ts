@@ -1,8 +1,6 @@
 import { NextAuthOptions } from 'next-auth';
 import GoogleProvider from 'next-auth/providers/google';
 import DiscordProvider from 'next-auth/providers/discord';
-import CredentialsProvider from 'next-auth/providers/credentials';
-import { verify } from 'jsonwebtoken';
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'fs';
 import { join } from 'path';
 import { prisma } from './db';
@@ -224,53 +222,16 @@ export const authOptions: NextAuthOptions = {
       clientId: process.env.DISCORD_CLIENT_ID!,
       clientSecret: process.env.DISCORD_CLIENT_SECRET!,
     }),
-    CredentialsProvider({
-      id: 'solana',
-      name: 'Solana Wallet',
-      credentials: {
-        token: { label: 'Token', type: 'text' },
-        publicKey: { label: 'Public Key', type: 'text' },
-      },
-      async authorize(credentials) {
-        if (!credentials?.token || !credentials?.publicKey) {
-          return null;
-        }
-
-        try {
-          // Verify the token (this token was already created by our /api/auth/verify endpoint)
-          const decoded = verify(credentials.token, process.env.NEXTAUTH_SECRET!) as any;
-          
-          if (decoded.publicKey !== credentials.publicKey) {
-            return null;
-          }
-
-          // Get user data from our database
-          const userData = await getOrCreateSolanaUser(credentials.publicKey);
-
-          return {
-            id: userData.id,
-            email: userData.email,
-            name: userData.name,
-            image: userData.image,
-            publicKey: credentials.publicKey,
-          };
-        } catch (error) {
-          console.error('Solana auth error:', error);
-          return null;
-        }
-      },
-    }),
   ],
   callbacks: {
-    async signIn({ profile, account, user }) {
-      // For OAuth providers (Google, Discord), store or update user in database
-      if (profile && account?.type === 'oauth') {
+    async signIn({ profile }) {
+      // Store or update user in database
+      if (profile) {
         await getOrCreateUser(profile as { sub?: string; email: string; name: string; picture?: string });
       }
-      // For Solana credentials provider, the user is already handled in authorize()
       return true;
     },
-    async session({ session, token }) {
+    async session({ session }) {
       if (session.user?.email) {
         try {
           // Try to get user from database first
@@ -283,7 +244,6 @@ export const authOptions: NextAuthOptions = {
               ...session.user,
               id: dbUser.id,
               plan: dbUser.plan,
-              publicKey: dbUser.publicKey || undefined,
               credits: {
                 used: 0,
                 remaining: dbUser.credits,
@@ -328,13 +288,9 @@ export const authOptions: NextAuthOptions = {
       }
       return session;
     },
-    async jwt({ token, profile, user }) {
+    async jwt({ token, profile }) {
       if (profile) {
         token.userData = await getOrCreateUser(profile as { sub?: string; email: string; name: string; picture?: string });
-      }
-      // For Solana users, copy user data to token
-      if (user && (user as any).publicKey) {
-        token.publicKey = (user as any).publicKey;
       }
       return token;
     },
@@ -437,129 +393,4 @@ export async function updateUserData(email: string, updates: Partial<UserData>):
   database.globalStats.lastUpdated = new Date().toISOString();
   writeUserDatabase(database);
   return database.users[userKey];
-}
-
-// Get or create user for Solana wallet authentication
-export async function getOrCreateSolanaUser(publicKey: string): Promise<UserData> {
-  try {
-    // Use publicKey as a unique identifier (like email for other providers)
-    const solanaEmail = `${publicKey}@solana.wallet`;
-    
-    // First try to find existing user in database by publicKey
-    let user = await prisma.user.findFirst({
-      where: { 
-        OR: [
-          { email: solanaEmail },
-          { publicKey: publicKey }
-        ]
-      }
-    });
-
-    if (!user) {
-      // Create new user in database
-      user = await prisma.user.create({
-        data: {
-          email: solanaEmail,
-          name: `(${publicKey.slice(0, 8)}...)`,
-          publicKey: publicKey,
-          plan: 'Basic',
-          credits: 30000 // Default credits
-        }
-      });
-
-      console.log(`✅ Created new Solana user in database: ${publicKey} with ${user.credits} credits`);
-    } else {
-      // Update existing user
-      user = await prisma.user.update({
-        where: { id: user.id },
-        data: {
-          publicKey: publicKey, // Ensure publicKey is set
-          updatedAt: new Date()
-        }
-      });
-
-      console.log(`🔄 Updated existing Solana user: ${publicKey} (${user.credits} credits remaining)`);
-    }
-
-    // Convert database user to UserData format for compatibility
-    const userData: UserData = {
-      id: user.id,
-      email: user.email,
-      name: user.name,
-      image: undefined, // Solana wallets don't have profile pictures
-      plan: user.plan,
-      credits: {
-        used: 0,
-        remaining: user.credits,
-        total: user.credits,
-      },
-      billingCycle: {
-        start: new Date().toISOString().split('T')[0],
-        end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-      },
-      createdAt: user.createdAt.toISOString(),
-      lastLogin: new Date().toISOString(),
-    };
-
-    // Also maintain JSON file for backward compatibility
-    try {
-      const database = readUserDatabase();
-      const userKey = solanaEmail.replace(/[^a-zA-Z0-9]/g, '_');
-      database.users[userKey] = userData;
-      database.globalStats.totalUsers = Object.keys(database.users).length;
-      database.globalStats.lastUpdated = new Date().toISOString();
-      writeUserDatabase(database);
-    } catch (jsonError) {
-      console.error('Error updating JSON file (non-critical):', jsonError);
-    }
-
-    return userData;
-  } catch (error) {
-    console.error('Error in getOrCreateSolanaUser:', error);
-    
-    // Fallback to JSON file system
-    console.log('Falling back to JSON file system...');
-    return getOrCreateSolanaUserFromJSON(publicKey);
-  }
-}
-
-// Fallback function for JSON file system (Solana users)
-function getOrCreateSolanaUserFromJSON(publicKey: string): UserData {
-  const database = readUserDatabase();
-  const solanaEmail = `${publicKey}@solana.wallet`;
-  const userKey = solanaEmail.replace(/[^a-zA-Z0-9]/g, '_');
-  let user = database.users[userKey];
-  
-  if (!user) {
-    // Create new Solana user with default credits
-    user = {
-      id: `solana_${Date.now()}`,
-      email: solanaEmail,
-      name: `(${publicKey.slice(0, 8)}...)`,
-      image: undefined,
-      plan: 'Basic',
-      credits: {
-        used: 0,
-        remaining: 30000, // Default credits
-        total: 30000,
-      },
-      billingCycle: {
-        start: new Date().toISOString().split('T')[0],
-        end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-      },
-      createdAt: new Date().toISOString(),
-      lastLogin: new Date().toISOString(),
-    };
-    
-    database.users[userKey] = user;
-    database.globalStats.totalUsers = Object.keys(database.users).length;
-    database.globalStats.lastUpdated = new Date().toISOString();
-  } else {
-    // Update last login
-    user.lastLogin = new Date().toISOString();
-    database.users[userKey] = user;
-  }
-  
-  writeUserDatabase(database);
-  return user;
 } 

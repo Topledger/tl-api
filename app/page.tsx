@@ -1,516 +1,178 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { MagnifyingGlassIcon, DocumentDuplicateIcon, FunnelIcon, ChevronDownIcon } from '@heroicons/react/24/outline';
-import MainLayout from '@/components/Layout/MainLayout';
-import Button from '@/components/UI/Button';
-import Dropdown from '@/components/UI/Dropdown';
-import ApiDetailsModal from '@/components/UI/ApiDetailsModal';
-import { copyToClipboard } from '@/lib/utils';
+import { useEffect, useState } from 'react';
+import { useSession } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
+import Header from '@/components/Layout/Header';
+import Footer from '@/components/Layout/Footer';
 
-interface ApiItem {
-  id: string;
-  title: string;
-  subtitle: string;
-  path: string;
-  wrapperUrl: string;
-  menuName: string;
-  pageName: string;
-  page?: string; // Added: for project-apitype pattern like "metaplex-traction"
-  method: string;
-  originalUrl: string;
-  responseColumns?: Array<{
-    name: string;
-    type: string;
-    description?: string;
-    example?: string;
-  }>;
-  description?: string;
-}
-
-interface ApiData {
-  totalApis: number;
-  extractedAt: string;
-  apis: ApiItem[];
-}
-
-export default function ExplorePage() {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedMenuName, setSelectedMenuName] = useState('');
-  const [selectedPageName, setSelectedPageName] = useState('');
-  const [selectedProject, setSelectedProject] = useState(''); // New: for project selection
-  const [selectedApiType, setSelectedApiType] = useState(''); // New: for API type selection
-  const [selectedApiKey, setSelectedApiKey] = useState('');
+export default function HomePage() {
+  const { data: session, status } = useSession();
+  const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
-  const [apiData, setApiData] = useState<ApiData | null>(null);
-  const [apiKeys, setApiKeys] = useState<any[]>([]);
-  const [menuNames, setMenuNames] = useState<string[]>([]);
-  const [pageNames, setPageNames] = useState<string[]>([]);
-  const [projectNames, setProjectNames] = useState<string[]>([]); // New: for project names
-  const [selectedApi, setSelectedApi] = useState<ApiItem | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [showApiKeyDropdown, setShowApiKeyDropdown] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 20;
 
   useEffect(() => {
-    loadData();
-  }, []);
+    if (status === 'loading') return; // Still loading session
 
-  // Close API key dropdown when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (!(event.target as Element).closest('.dropdown-container')) {
-        setShowApiKeyDropdown(false);
-      }
-    };
+    setIsLoading(false);
 
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, []);
-
-  const loadData = async () => {
-    try {
-      setIsLoading(true);
-      
-      // Load wrapped APIs from our new endpoint
-      const response = await fetch('/api/tl-apis');
-      if (response.ok) {
-        const data = await response.json();
-        setApiData(data);
-
-        // Extract unique menu names and page names
-        const uniqueMenuNames = [...new Set(data.apis.map((api: any) => api.menuName as string))].sort();
-        const uniquePageNames = [...new Set(data.apis.map((api: any) => api.pageName as string))].sort();
-        
-        // Extract unique project names from "page" field for Projects category
-        const projectsApis = data.apis.filter((api: any) => api.menuName === 'Projects');
-        console.log('📊 Projects APIs found:', projectsApis.length);
-        console.log('🔍 Sample project API:', projectsApis[0]);
-        
-        const uniqueProjectNames = [...new Set(
-          projectsApis
-            .map((api: any) => {
-              console.log('🎯 Processing page field:', api.page);
-              if (!api.page) return null;
-              
-              // Extract core project name - always take the first part
-              // except for special cases like "sol-strategies"
-              const parts = api.page.split('-');
-              const firstPart = parts[0];
-              
-              // Special case: sol-strategies should be kept together
-              if (firstPart === 'sol' && parts.length > 1 && parts[1] === 'strategies') {
-                return 'sol-strategies';
-              }
-              
-              // For all other cases, just take the first part (core project name)
-              // "metaplex-competitive-landscape" -> "metaplex"
-              // "helium-protocol-traction" -> "helium"
-              // "orca-traction" -> "orca"
-              return firstPart;
-            })
-            .filter(Boolean) // Remove any undefined/empty values
-        )].sort();
-        
-        console.log('📝 Unique project names extracted:', uniqueProjectNames);
-        
-        setMenuNames(uniqueMenuNames as string[]);
-        setPageNames(uniquePageNames as string[]);
-        setProjectNames(uniqueProjectNames as string[]);
-      }
-
-      // Load API keys from our API
-      const keysResponse = await fetch('/api/keys');
-      if (keysResponse.ok) {
-        const keysData = await keysResponse.json();
-        const keys = Array.isArray(keysData) ? keysData : [];
-        setApiKeys(keys);
-
-        // Set first API key as default
-        if (keys.length > 0) {
-          setSelectedApiKey(keys[0].id);
-        }
-      }
-    } catch (error) {
-      console.error('Error loading data:', error);
-      setApiData(null);
-      setApiKeys([]);
-      setMenuNames([]);
-      setPageNames([]);
-      setProjectNames([]);
-    } finally {
-      setIsLoading(false);
+    if (session) {
+      // User is authenticated, redirect to dashboard
+      router.push('/dashboard');
     }
+    // If no session, show landing page (don't redirect)
+  }, [session, status, router]);
+
+  const handleGetStarted = () => {
+    router.push('/auth/signin');
   };
 
-  const handleCopyEndpoint = (api: ApiItem) => {
-    // Check if API key is selected
-    const selectedKey = Array.isArray(apiKeys) ? apiKeys.find(key => key.id === selectedApiKey) : null;
-    if (!selectedKey) {
-      alert('Please select an API key first');
-      return;
-    }
-
-    // Open modal with API details
-    setSelectedApi(api);
-    setIsModalOpen(true);
+  const handleViewDocs = () => {
+    router.push('/docs');
   };
 
-  const handleViewDetails = (api: ApiItem) => {
-    // For now, just show more info or could navigate to a dedicated page
-    alert(`API: ${api.title}\nCategory: ${api.menuName} > ${api.pageName}\nWrapper URL: ${api.wrapperUrl}\nOriginal URL: ${api.originalUrl}`);
-  };
-
-  // Filter APIs based on search term and selected categories
-  const filteredApis = apiData?.apis ? apiData.apis.filter(api => {
-    const matchesSearch = !searchTerm || (
-      api.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      api.subtitle.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      api.menuName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      api.pageName.toLowerCase().includes(searchTerm.toLowerCase())
+  // Show loading spinner while checking authentication
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-600"></div>
+      </div>
     );
-    
-    const matchesMenuName = !selectedMenuName || api.menuName === selectedMenuName;
-    
-    // For Projects category, use three-level filtering
-    if (selectedMenuName === 'Projects') {
-      let projectName = '';
-      if (api.page) {
-        const parts = api.page.split('-');
-        const firstPart = parts[0];
-        
-        // Special case: sol-strategies should be kept together
-        if (firstPart === 'sol' && parts.length > 1 && parts[1] === 'strategies') {
-          projectName = 'sol-strategies';
-        } else {
-          // For all other cases, just take the first part (core project name)
-          projectName = firstPart;
-        }
-      }
-      
-      const matchesProject = !selectedProject || projectName === selectedProject;
-      const matchesApiType = !selectedApiType || api.pageName === selectedApiType;
-      
-      return matchesSearch && matchesMenuName && matchesProject && matchesApiType;
-    }
-    
-    // For other categories, use regular two-level filtering
-    const matchesPageName = !selectedPageName || api.pageName === selectedPageName;
-    return matchesSearch && matchesMenuName && matchesPageName;
-  }) : [];
+  }
 
-  // Pagination logic
-  const totalPages = Math.ceil(filteredApis.length / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
-  const paginatedApis = filteredApis.slice(startIndex, endIndex);
-
-  // Get available options based on selections
-  const availablePageNames = selectedMenuName && selectedMenuName !== 'Projects'
-    ? [...new Set(apiData?.apis?.filter(api => api.menuName === selectedMenuName).map(api => api.pageName) || [])].sort()
-    : pageNames;
-
-  // For Projects category, get available API types for selected project
-  const availableApiTypes = selectedProject
-    ? [...new Set(
-        apiData?.apis
-          ?.filter(api => {
-            if (api.menuName !== 'Projects' || !api.page) return false;
-            
-            // Extract project name using same logic
-            const parts = api.page.split('-');
-            const firstPart = parts[0];
-            let projectName = '';
-            
-            // Special case: sol-strategies should be kept together
-            if (firstPart === 'sol' && parts.length > 1 && parts[1] === 'strategies') {
-              projectName = 'sol-strategies';
-            } else {
-              // For all other cases, just take the first part (core project name)
-              projectName = firstPart;
-            }
-            
-            return projectName === selectedProject;
-          })
-          .map(api => api.pageName) || []
-      )].sort()
-    : [];
-
-  // Prepare dropdown options
-  const categoryOptions = [
-    { value: '', label: 'All Categories' },
-    ...menuNames.map(name => ({ value: name, label: name }))
-  ];
-
-  const pageOptions = [
-    { value: '', label: 'All Subcategories' },
-    ...availablePageNames.map(name => ({ value: name, label: name }))
-  ];
-
-  const projectOptions = [
-    { value: '', label: 'All Projects' },
-    ...projectNames.map(name => ({ value: name, label: name.charAt(0).toUpperCase() + name.slice(1) })) // Capitalize first letter
-  ];
-
-  const apiTypeOptions = [
-    { value: '', label: 'All API Types' },
-    ...availableApiTypes.map(name => ({ value: name, label: name }))
-  ];
-
-  const apiKeyOptions = [
-    { value: '', label: 'Use Default API Key' },
-    ...(Array.isArray(apiKeys) ? apiKeys.map(key => ({ value: key.id, label: key.name })) : [])
-  ];
-
+  // Show landing page for non-authenticated users
   return (
-    <MainLayout title="Top Ledger APIs">
-      <div className="space-y-6">
-        {/* Search and Filters */}
-        <div className="bg-white rounded-sm justify border border-gray-200 py-1 pl-2 pr-6">
-          <div className="space-y-4">
+    <div className="min-h-screen bg-white flex flex-col relative overflow-hidden">
+      
+      {/* Geometric Background Pattern */}
+      <div className="absolute inset-0 pointer-events-none">
+        <svg className="w-full h-full" viewBox="0 0 1000 1000" preserveAspectRatio="xMidYMid slice">
+          <defs>
+            <pattern id="hexPattern" width="100" height="87" patternUnits="userSpaceOnUse">
+              <polygon 
+                points="50,5 85,25 85,65 50,85 15,65 15,25" 
+                fill="none" 
+                stroke="#f3f4f6" 
+                strokeWidth="1" 
+                opacity="0.8"
+              />
+            </pattern>
+          </defs>
+          
+          <rect width="100%" height="100%" fill="url(#hexPattern)" />
+          
+          {/* Large accent hexagons */}
+          <g opacity="0.4">
+            <polygon 
+              points="200,100 270,140 270,220 200,260 130,220 130,140" 
+              fill="none" 
+              stroke="#e5e7eb" 
+              strokeWidth="1"
+            />
+            <polygon 
+              points="700,300 770,340 770,420 700,460 630,420 630,340" 
+              fill="none" 
+              stroke="#e5e7eb" 
+              strokeWidth="1"
+            />
+            <polygon 
+              points="400,600 470,640 470,720 400,760 330,720 330,640" 
+              fill="none" 
+              stroke="#e5e7eb" 
+              strokeWidth="1"
+            />
+          </g>
+          
+          {/* Connecting lines */}
+          <g opacity="0.3">
+            <line x1="200" y1="260" x2="630" y2="340" stroke="#e5e7eb" strokeWidth="1"/>
+            <line x1="270" y1="220" x2="700" y2="300" stroke="#e5e7eb" strokeWidth="1"/>
+            <line x1="700" y1="460" x2="400" y2="600" stroke="#e5e7eb" strokeWidth="1"/>
+          </g>
+          
+          {/* Small geometric shapes */}
+          <g opacity="0.5">
+            <circle cx="150" cy="400" r="3" fill="#d1d5db"/>
+            <circle cx="800" cy="200" r="3" fill="#d1d5db"/>
+            <circle cx="600" cy="700" r="3" fill="#d1d5db"/>
+            <circle cx="300" cy="800" r="3" fill="#d1d5db"/>
+          </g>
+        </svg>
+      </div>
+
+      {/* Header */}
+      <div className="relative z-20">
+        <Header 
+          showLogo={true}
+          menuItems={[
+            { label: 'Documentation', onClick: handleViewDocs }
+          ]}
+          customButton={{
+            label: 'Sign In',
+            onClick: handleGetStarted,
+            variant: 'primary'
+          }}
+        />
+      </div>
+
+      {/* Hero Section */}
+      <main className="flex-1 flex items-center justify-center px-8 relative z-10">
+        <div className="max-w-4xl mx-auto text-center">
+          <div className="mb-16">
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-light text-gray-900 mb-8 leading-tight tracking-tight">
+              Top Ledger APIs for
+              <br />
+              <span className="font-normal leading-tight">Solana data</span>
+            </h1>
             
-            
-            {/* All Filters in One Line */}
-            <div className="flex flex-col lg:flex-row lg:items-center gap-4">
-              {/* Search Bar - expands to fill available space */}
-              <div className="relative flex-1 lg:max-w-none">
-                <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-                <input
-                  type="text"
-                  placeholder="Search APIs by title, description, or category..."
-                  value={searchTerm}
-                  onChange={(e) => {
-                    setSearchTerm(e.target.value);
-                    setCurrentPage(1); // Reset to first page when searching
-                  }}
-                  className="pl-10 w-full text-sm rounded-sm border-black py-2 focus:outline-none"
-                />
+            <p className="text-lg text-gray-600 mb-12 max-w-2xl mx-auto leading-relaxed">
+              Access comprehensive solana data through clean, reliable APIs. 
+              Built for performance and simplicity.
+            </p>
+
+            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-24">
+              <button
+                onClick={handleGetStarted}
+                className="px-8 py-3 bg-black text-white text-sm font-medium hover:bg-gray-800 transition-colors duration-200"
+              >
+                Get Started
+              </button>
+              
+              <button
+                onClick={handleViewDocs}
+                className="px-8 py-3 text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors duration-200"
+              >
+                View Documentation →
+              </button>
+            </div>
+          </div>
+
+          
+
+          {/* Minimal Stats */}
+          <div className="border-t border-gray-200 pt-12">
+            <div className="grid grid-cols-3 gap-8 text-center">
+              <div>
+                <div className="text-2xl font-light text-gray-900 mb-1">99.9%</div>
+                <div className="text-xs text-gray-500 uppercase tracking-wide">Uptime</div>
               </div>
               
-              {/* Dropdowns Container - shifts right on desktop */}
-              <div className="flex flex-wrap gap-4 lg:flex-nowrap lg:ml-auto lg:flex-shrink-0">
-                <Dropdown
-                  options={categoryOptions}
-                  value={selectedMenuName}
-                  onChange={(value) => {
-                    setSelectedMenuName(value);
-                    setSelectedPageName(''); // Reset page filter when menu changes
-                    setSelectedProject(''); // Reset project filter
-                    setSelectedApiType(''); // Reset API type filter
-                    setCurrentPage(1); // Reset to first page
-                  }}
-                  placeholder="All Categories"
-                  className="w-full sm:w-[200px] lg:w-[200px]"
-                />
-                
-                {/* Show different dropdowns based on selected category */}
-                {selectedMenuName === 'Projects' ? (
-                  <>
-                    {/* Projects Dropdown */}
-                    <Dropdown
-                      options={projectOptions}
-                      value={selectedProject}
-                      onChange={(value) => {
-                        setSelectedProject(value);
-                        setSelectedApiType(''); // Reset API type when project changes
-                        setCurrentPage(1); // Reset to first page
-                      }}
-                      placeholder="All Projects"
-                      className="w-full sm:w-[200px] lg:w-[200px]"
-                    />
-                    
-                    {/* API Type Dropdown - only show when project is selected */}
-                    {selectedProject && (
-                      <Dropdown
-                        options={apiTypeOptions}
-                        value={selectedApiType}
-                        onChange={(value) => {
-                          setSelectedApiType(value);
-                          setCurrentPage(1); // Reset to first page
-                        }}
-                        placeholder="All API Types"
-                        className="w-full sm:w-[200px] lg:w-[200px]"
-                      />
-                    )}
-                  </>
-                ) : (
-                  /* Regular subcategory dropdown for non-Projects categories */
-                  <Dropdown
-                    options={pageOptions}
-                    value={selectedPageName}
-                    onChange={(value) => {
-                      setSelectedPageName(value);
-                      setCurrentPage(1); // Reset to first page
-                    }}
-                    placeholder={!selectedMenuName ? "Select Category First" : "All Subcategories"}
-                    disabled={!selectedMenuName}
-                    className="w-full sm:w-[200px] lg:w-[200px]"
-                  />
-                )}
-
-                <div className="w-full sm:w-[200px] lg:w-[200px] relative dropdown-container">
-                  <div className="flex bg-white border border-gray-200 rounded-sm transition-shadow duration-200 overflow-hidden">
-                    {/* Left section - Key label */}
-                    <div className="bg-gradient-to-r from-gray-50 to-gray-100 border-r border-gray-200 px-3 py-2 flex items-center">
-                      <span className="text-xs font-normal text-gray-500 tracking-wider">KEY</span>
-                    </div>
-                    {/* Right section - Dropdown area */}
-                    <button
-                      type="button"
-                      className="flex-1 py-2 px-3 text-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-inset flex items-center justify-between group"
-                      onClick={() => setShowApiKeyDropdown(!showApiKeyDropdown)}
-                    >
-                      <span className={`truncate ${!selectedApiKey ? 'text-gray-400' : ''}`}>
-                        {selectedApiKey 
-                          ? Array.isArray(apiKeys) && apiKeys.find(key => key.id === selectedApiKey)?.name 
-                          : 'Select API key'
-                        }
-                      </span>
-                      <ChevronDownIcon className={`h-4 w-4 text-gray-400 ml-2 flex-shrink-0 transition-transform duration-200 ${showApiKeyDropdown ? 'rotate-180' : ''} group-hover:text-gray-600`} />
-                    </button>
-                  </div>
-                  
-                  {showApiKeyDropdown && (
-                    <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-sm shadow-md border border-gray-200 py-1 focus:outline-none z-50 max-h-60 overflow-auto">
-                      
-                     
-                      {Array.isArray(apiKeys) && apiKeys.map((key) => (
-                        <button
-                          key={key.id}
-                          type="button"
-                          className="block w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors duration-150"
-                          onClick={() => {
-                            setSelectedApiKey(key.id);
-                            setShowApiKeyDropdown(false);
-                          }}
-                        >
-                          <span className="font-medium">{key.name}</span>
-                          {key.description && (
-                            <span className="block text-xs text-gray-500 mt-0.5">{key.description}</span>
-                          )}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* API Statistics 
-        {apiData && (
-          <div className="bg-gradient-to-r from-gray-50 to-indigo-50 rounded-lg border border-gray-200 p-6">
-            <div className="flex items-center justify-between">
               <div>
-                <h2 className="text-xl font-bold text-gray-900">Top Ledger APIs</h2>
-                <p className="text-sm text-gray-600">Comprehensive analytics and data endpoints</p>
+                <div className="text-2xl font-light text-gray-900 mb-1">500ms</div>
+                <div className="text-xs text-gray-500 uppercase tracking-wide">Avg Response</div>
               </div>
-              <div className="text-right">
-                <div className="text-2xl font-bold text-gray-600">{filteredApis.length}</div>
-                <div className="text-sm text-gray-500">of {apiData.totalApis} APIs</div>
+              <div>
+                <div className="text-2xl font-light text-gray-900 mb-1">24/7</div>
+                <div className="text-xs text-gray-500 uppercase tracking-wide">Support</div>
               </div>
             </div>
           </div>
-        )}*/}
-
-        {/* API Endpoints List */}
-        <div className="space-y-4">
-          {isLoading ? (
-            <div className="flex flex-col items-center justify-center min-h-[60vh]">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-400"></div>
-              <p className="mt-2 text-gray-500">Loading APIs...</p>
-            </div>
-          ) : filteredApis.length === 0 ? (
-            <div className="text-center py-8">
-              <p className="text-gray-500">
-                {apiData ? 'No APIs found matching your filters.' : 'Failed to load APIs.'}
-              </p>
-            </div>
-          ) : (
-            paginatedApis.map((api, index) => (
-              <div
-                key={`${api.id}-${index}`}
-                className="bg-white rounded-sm border border-gray-200 py-4 px-6"
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center space-x-3">
-                      <div className="flex-1">
-                        <h3 className="text-sm font-medium text-gray-800 mb-[0.2rem]">
-                          {api.title}
-                        </h3>
-                        {api.subtitle && (
-                          <p className="text-gray-500 text-sm">{api.subtitle}</p>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleCopyEndpoint(api)}
-                      disabled={!selectedApiKey}
-                    >
-                      <DocumentDuplicateIcon className="h-4 w-4 mr-1" />
-                      View API Details
-                    </Button>
-                    {/* <Button
-                      variant="primary"
-                      size="sm"
-                      onClick={() => handleViewDetails(api)}
-                    >
-                      View Details
-                    </Button> */}
-                  </div>
-                </div>
-              </div>
-            ))
-          )}
-          
-          {/* Pagination Controls */}
-          {filteredApis.length > itemsPerPage && (
-            <div className="flex items-center justify-between py-4">
-              <div className="text-sm text-gray-500">
-                Showing {startIndex + 1} to {Math.min(endIndex, filteredApis.length)} of {filteredApis.length} results
-              </div>
-              <div className="flex items-center space-x-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-                  disabled={currentPage === 1}
-                >
-                  Previous
-                </Button>
-                <span className="text-sm text-gray-600">
-                  Page {currentPage} of {totalPages}
-                </span>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
-                  disabled={currentPage === totalPages}
-                >
-                  Next
-                </Button>
-              </div>
-            </div>
-          )}
         </div>
+      </main>
+
+      <div className="relative z-20">
+        <Footer />
+      </div>
     </div>
-    
-    {/* API Details Modal */}
-    <ApiDetailsModal
-      isOpen={isModalOpen}
-      onClose={() => setIsModalOpen(false)}
-      api={selectedApi}
-      selectedApiKey={Array.isArray(apiKeys) ? apiKeys.find(key => key.id === selectedApiKey) : null}
-    />
-    </MainLayout>
   );
 }

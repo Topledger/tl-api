@@ -2,10 +2,14 @@
 
 import { Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import MainLayout from '@/components/Layout/MainLayout';
+import Header from '@/components/Layout/Header';
+import Footer from '@/components/Layout/Footer';
 
 function TermsContent() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const noLayout = searchParams?.get('noLayout') === 'true';
 
   const content = (
@@ -206,26 +210,31 @@ function TermsContent() {
   // Return layout based on context
   if (noLayout) {
     return (
-      <div className="min-h-screen bg-gray-50">
-        {/* Simple header for auth pages */}
-        <div className="bg-white border-b border-gray-200">
-          <div className="max-w-7xl mx-auto px-8 py-4">
-            <div className="flex items-center justify-between">
-              <img 
-                src="https://topledger.xyz/assets/images/logo/topledger-full.svg?imwidth=384"
-                alt="Top Ledger"
-                className="h-8 w-auto"
-              />
-              <button 
-                onClick={() => window.history.back()}
-                className="text-gray-600 hover:text-gray-900 text-sm"
-              >
-                ← Back to login
-              </button>
-            </div>
+      <div className="min-h-screen bg-white flex flex-col relative overflow-hidden">
+        {/* Header */}
+        <div className="relative z-20">
+          <Header 
+            showLogo={true}
+            title="Terms of Service"
+            customButton={{
+              label: '← Back',
+              onClick: () => window.history.back(),
+              variant: 'secondary'
+            }}
+          />
+        </div>
+        
+        {/* Content */}
+        <div className="flex-1 relative z-10">
+          <div className="bg-gray-50 min-h-full">
+            {content}
           </div>
         </div>
-        {content}
+        
+        {/* Footer */}
+        <div className="relative z-20">
+          <Footer />
+        </div>
       </div>
     );
   }

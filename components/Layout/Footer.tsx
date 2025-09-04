@@ -8,6 +8,11 @@ export default function Footer() {
   const currentYear = new Date().getFullYear();
   const pathname = usePathname();
   const isAuthPage = pathname?.includes('/auth/');
+  const isHomePage = pathname === '/';
+  const isDocsPage = pathname === '/docs';
+  
+  // Use noLayout for auth, home, and docs pages
+  const shouldUseNoLayout = isAuthPage || isHomePage || isDocsPage;
 
   return (
     <footer className="bg-white border-t border-gray-200 mt-auto relative z-20">
@@ -29,13 +34,13 @@ export default function Footer() {
             {/* Links */}
             <div className="flex items-center space-x-6 text-xs text-gray-600">
               <Link 
-                href={isAuthPage ? "/privacy?noLayout=true" : "/privacy"} 
+                href={shouldUseNoLayout ? "/privacy?noLayout=true" : "/privacy"} 
                 className="hover:text-gray-900 transition-colors cursor-pointer"
               >
                 Privacy Policy
               </Link>
               <Link 
-                href={isAuthPage ? "/terms?noLayout=true" : "/terms"} 
+                href={shouldUseNoLayout ? "/terms?noLayout=true" : "/terms"} 
                 className="hover:text-gray-900 transition-colors cursor-pointer"
               >
                 Terms of Service

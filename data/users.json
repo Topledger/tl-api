@@ -12,11 +12,11 @@
         "total": 29999
       },
       "billingCycle": {
-        "start": "2025-09-03",
-        "end": "2025-10-03"
+        "start": "2025-09-04",
+        "end": "2025-10-04"
       },
       "createdAt": "2025-08-30T12:34:32.964Z",
-      "lastLogin": "2025-09-03T11:10:54.708Z"
+      "lastLogin": "2025-09-04T09:13:34.715Z"
     },
     "urluckyturtle_gmail_com": {
       "id": "user_1756897287961",
@@ -56,6 +56,6 @@
     "totalUsers": 3,
     "totalApiCalls": 0,
     "totalRevenue": 0,
-    "lastUpdated": "2025-09-03T13:37:49.186Z"
+    "lastUpdated": "2025-09-04T09:13:34.716Z"
   }
 }
