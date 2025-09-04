@@ -56,9 +56,10 @@ const addLineNumbers = (code: string) => {
   }));
 };
 
-// Helper function to shorten URL
-const shortenUrl = (url: string) => {
-  return url.length > 80 ? url.slice(0, 80) + '...' : url;
+// Helper function to shorten URL based on screen size
+const shortenUrl = (url: string, isMobile: boolean = false) => {
+  const maxLength = isMobile ? 28 : 80;
+  return url.length > maxLength ? url.slice(0, maxLength) + '...' : url;
 };
 
 // Tabs component for usage examples
@@ -175,9 +176,22 @@ export default function DocsPage() {
   const [sampleResponse, setSampleResponse] = useState<any>(null);
   const [loadingResponse, setLoadingResponse] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
     loadData();
+  }, []);
+
+  // Hook to detect mobile screen size
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 640); // Tailwind's sm breakpoint
+    };
+
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
   const loadData = async () => {
@@ -391,6 +405,7 @@ export default function DocsPage() {
         <Header 
           showLogo={true}
           title="API Documentation"
+          onMenuClick={() => setSidebarOpen(!sidebarOpen)}
           menuItems={[
             { label: 'Home', href: '/' },
           ]}
@@ -403,9 +418,22 @@ export default function DocsPage() {
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 flex max-w-9xl mx-auto w-full">
+      <div className="flex-1 flex max-w-9xl mx-auto w-full relative">
+        {/* Mobile Sidebar Overlay */}
+        {sidebarOpen && (
+          <div 
+            className="fixed inset-0 bg-black bg-opacity-0 z-40 lg:hidden"
+            onClick={() => setSidebarOpen(false)}
+          />
+        )}
+
         {/* Sidebar */}
-        <aside className="w-60 bg-white border-r border-gray-200 overflow-y-auto h-[calc(100vh-73px)] sticky top-[73px]">
+        <aside className={`
+          ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
+          lg:translate-x-0 lg:static fixed left-0 top-[73px] z-50
+          w-60 bg-white border-r border-gray-200 overflow-y-auto 
+          h-[calc(100vh-73px)] transition-transform duration-300 ease-in-out
+        `}>
           <div className="px-3 py-4">
             <h2 className="text-xs font-medium text-gray-500 mb-3 tracking-wide">API Reference</h2>
             
@@ -552,25 +580,21 @@ export default function DocsPage() {
         </aside>
 
         {/* Main Content Area */}
-        <main className="flex-1 overflow-y-auto">
+        <main className="flex-1 overflow-y-auto min-w-0">
           {selectedApi ? (
-            <div className="p-8">
+            <div className="p-4 sm:p-6 lg:p-8">
               {/* API Header */}
               <div className="mb-6">
-                <div className="flex items-center gap-3 mb-3">
-                  <h1 className="text-lg font-semibold text-gray-900">{selectedApi.title}</h1>
-                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-sm text-xs font-medium bg-green-100 text-green-800">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 mb-3">
+                  <h1 className="text-lg sm:text-md font-semibold text-gray-900">{selectedApi.title}</h1>
+                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-sm text-xs font-medium bg-green-100 text-green-800 w-fit">
                     {selectedApi.method}
                   </span>
                 </div>
                 {selectedApi.subtitle && (
                   <p className="text-sm text-gray-600 mb-3">{selectedApi.subtitle}</p>
                 )}
-                <div className="flex items-center text-sm text-gray-500 space-x-2">
-                  <span>{selectedApi.menuName}</span>
-                  <span>•</span>
-                  <span>{selectedApi.pageName}</span>
-                </div>
+               
               </div>
 
               {/* API Description */}
@@ -586,7 +610,7 @@ export default function DocsPage() {
                 <h4 className="font-semibold text-gray-900 mb-3">API Endpoint</h4>
                 <div className="relative">
                   <code className="block bg-gray-900 text-green-400 p-3 rounded-sm text-sm font-mono overflow-x-auto">
-                    {shortenUrl(fullEndpointUrl)}
+                    {shortenUrl(fullEndpointUrl, isMobile)}
                   </code>
                   <button
                     onClick={handleCopyEndpoint}
@@ -610,7 +634,7 @@ export default function DocsPage() {
               {/* Horizontal Line */}
               <hr className="border-gray-200 mb-6" />
 
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                              <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
                 {/* Response Schema */}
                 {selectedApi.responseColumns && selectedApi.responseColumns.length > 0 && (
                   <div>
@@ -676,7 +700,7 @@ export default function DocsPage() {
                     <div className="flex items-center justify-between mb-3">
                       <h4 className="font-medium text-sm text-gray-600">Response snippet</h4>
                     </div>
-                    <div className="border border-gray-200 rounded-sm overflow-hidden h-80">
+                                          <div className="border border-gray-200 rounded-sm overflow-hidden h-64 sm:h-80">
                       <div className="bg-white h-full flex flex-col">
                         <div className="flex-1 overflow-hidden">
                           {sampleResponse ? (
@@ -684,9 +708,9 @@ export default function DocsPage() {
                               const jsonString = JSON.stringify(sampleResponse, null, 2);
                               const numberedLines = addLineNumbers(jsonString);
                               return (
-                                <div className="flex text-sm font-mono h-full">
-                                  {/* Line Numbers */}
-                                  <div className="bg-gray-50 text-gray-500 px-0 py-4 select-none border-r border-gray-200 min-w-[2rem] overflow-y-auto">
+                                <div className="flex text-xs sm:text-sm font-mono h-full">
+                                  {/* Line Numbers - Hidden on mobile */}
+                                  <div className="hidden sm:block bg-gray-50 text-gray-500 px-0 py-4 select-none border-r border-gray-200 min-w-[2rem] overflow-y-auto">
                                     {numberedLines.map((line) => (
                                       <div key={line.number} className="text-center leading-6">
                                         {line.number}
@@ -694,7 +718,7 @@ export default function DocsPage() {
                                     ))}
                                   </div>
                                   {/* JSON Content */}
-                                  <div className="flex-1 bg-white text-gray-800 px-4 py-4 overflow-auto">
+                                  <div className="flex-1 bg-white text-gray-800 px-2 sm:px-4 py-4 overflow-auto">
                                     {numberedLines.map((line) => (
                                       <div key={line.number} className="whitespace-pre leading-6">
                                         {line.content}
@@ -705,18 +729,18 @@ export default function DocsPage() {
                               );
                             })()
                           ) : (
-                            <div className="flex text-sm font-mono h-full">
-                              <div className="bg-gray-50 text-gray-500 px-0 py-4 select-none border-r border-gray-200 min-w-[2rem]">
+                            <div className="flex text-xs sm:text-sm font-mono h-full">
+                              <div className="hidden sm:block bg-gray-50 text-gray-500 px-0 py-4 select-none border-r border-gray-200 min-w-[2rem]">
                                 <div className="text-center leading-6">1</div>
                               </div>
-                              <div className="flex-1 bg-white text-gray-800 px-4 py-4">
+                              <div className="flex-1 bg-white text-gray-800 px-2 sm:px-4 py-4">
                                 <div className="whitespace-pre leading-6">Loading response...</div>
                               </div>
                             </div>
                           )}
                         </div>
                         {sampleResponse && !sampleResponse.error && (
-                          <div className="text-xs text-gray-600 px-4 py-2 border-t border-gray-200 bg-gray-50">
+                          <div className="text-xs text-gray-600 px-2 sm:px-4 py-2 border-t border-gray-200 bg-gray-50">
                             {sampleResponse._docs_preview ? 
                               'Note: Actual API responses may vary and contain more complete data.' :
                               'Note: Response has been truncated for display. The actual API returns complete data.'

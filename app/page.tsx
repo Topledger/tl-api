@@ -116,31 +116,31 @@ export default function HomePage() {
       </div>
 
       {/* Hero Section */}
-      <main className="flex-1 flex items-center justify-center px-8 relative z-10">
+      <main className="flex-1 flex items-center justify-center px-4 sm:px-8 relative z-10">
         <div className="max-w-4xl mx-auto text-center">
           <div className="mb-16">
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-light text-gray-900 mb-8 leading-tight tracking-tight">
+            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-light text-gray-900 mb-6 sm:mb-8 leading-tight tracking-tight">
               Top Ledger APIs for
               <br />
               <span className="font-normal leading-tight">Solana data</span>
             </h1>
             
-            <p className="text-lg text-gray-600 mb-12 max-w-2xl mx-auto leading-relaxed">
+            <p className="text-base sm:text-lg text-gray-600 mb-8 sm:mb-12 max-w-2xl mx-auto leading-relaxed px-4 sm:px-0">
               Access comprehensive solana data through clean, reliable APIs. 
               Built for performance and simplicity.
             </p>
 
-            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-24">
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-center mb-16 sm:mb-24">
               <button
                 onClick={handleGetStarted}
-                className="px-8 py-3 bg-black text-white text-sm font-medium hover:bg-gray-800 transition-colors duration-200"
+                className="w-full sm:w-auto px-8 py-3 bg-black text-white text-sm font-medium hover:bg-gray-800 transition-colors duration-200"
               >
                 Get Started
               </button>
               
               <button
                 onClick={handleViewDocs}
-                className="px-8 py-3 text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors duration-200"
+                className="w-full sm:w-auto px-8 py-3 text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors duration-200"
               >
                 View Documentation →
               </button>
@@ -150,19 +150,19 @@ export default function HomePage() {
           
 
           {/* Minimal Stats */}
-          <div className="border-t border-gray-200 pt-12">
-            <div className="grid grid-cols-3 gap-8 text-center">
+          <div className="border-t border-gray-200 pt-8 sm:pt-12">
+            <div className="grid grid-cols-3 gap-4 sm:gap-8 text-center">
               <div>
-                <div className="text-2xl font-light text-gray-900 mb-1">99.9%</div>
+                <div className="text-xl sm:text-2xl font-light text-gray-900 mb-1">99.9%</div>
                 <div className="text-xs text-gray-500 uppercase tracking-wide">Uptime</div>
               </div>
               
               <div>
-                <div className="text-2xl font-light text-gray-900 mb-1">500ms</div>
+                <div className="text-xl sm:text-2xl font-light text-gray-900 mb-1">500ms</div>
                 <div className="text-xs text-gray-500 uppercase tracking-wide">Avg Response</div>
               </div>
               <div>
-                <div className="text-2xl font-light text-gray-900 mb-1">24/7</div>
+                <div className="text-xl sm:text-2xl font-light text-gray-900 mb-1">24/7</div>
                 <div className="text-xs text-gray-500 uppercase tracking-wide">Support</div>
               </div>
             </div>
