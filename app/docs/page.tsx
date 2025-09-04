@@ -403,7 +403,7 @@ export default function DocsPage() {
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
       {/* Header */}
-      <div className="sticky top-0 z-10">
+      <div className="sticky top-0 z-[60]">
         <Header 
           showLogo={true}
           title="API Documentation"
@@ -424,7 +424,7 @@ export default function DocsPage() {
         {/* Mobile Sidebar Overlay */}
         {sidebarOpen && (
           <div 
-            className="fixed inset-0 bg-black bg-opacity-0 z-40 lg:hidden"
+            className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
             onClick={() => setSidebarOpen(false)}
           />
         )}
@@ -432,7 +432,7 @@ export default function DocsPage() {
         {/* Sidebar */}
         <aside className={`
           ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
-          lg:translate-x-0 lg:static fixed left-0 top-[73px] z-50
+          lg:translate-x-0 lg:sticky lg:top-[73px] fixed left-0 top-[73px] z-50
           w-60 bg-white border-r border-gray-200 overflow-y-auto 
           h-[calc(100vh-73px)] transition-transform duration-300 ease-in-out
         `}>

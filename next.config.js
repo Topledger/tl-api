@@ -18,7 +18,7 @@ const nextConfig = {
     formats: ['image/webp', 'image/avif'],
   },
   // Reduce bundle size
-  swcMinify: true,
+  //swcMinify: true,
   // Optimize for faster builds
   modularizeImports: {
     '@heroicons/react/24/outline': {
