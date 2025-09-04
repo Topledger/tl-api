@@ -55,13 +55,13 @@ export default function Header({ title, breadcrumbs, onMenuClick, showLogo, cust
 
   return (
     <header className="bg-gray-50 border-b border-gray-200">
-      <div className="px-6 py-4">
+      <div className="px-4 md:px-6 lg:px-6 py-4">
         <div className="flex items-center justify-between">
           {/* Mobile menu button */}
           {onMenuClick && (
             <button
               type="button"
-              className="lg:hidden p-2 rounded-md text-gray-400 hover:text-gray-300 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-gray-300"
+              className="lg:hidden pr-2 rounded-md text-gray-400 hover:text-gray-500 focus:text-gray-500 "
               onClick={onMenuClick}
             >
               <Bars3Icon className="h-6 w-6" />
@@ -205,7 +205,7 @@ export default function Header({ title, breadcrumbs, onMenuClick, showLogo, cust
                       className={`px-4 py-2 rounded-sm text-sm font-medium focus:outline-none focus:ring-2 focus:ring-offset-2 transition-colors ${
                         customButton.variant === 'secondary'
                           ? 'bg-gray-200 text-gray-700 hover:bg-gray-300 focus:ring-gray-300'
-                          : 'bg-black text-white hover:bg-gray-700 focus:ring-gray-300'
+                          : 'bg-gray-900 text-white hover:bg-gray-700 focus:ring-gray-300'
                       }`}
                     >
                       {customButton.label}
@@ -213,7 +213,7 @@ export default function Header({ title, breadcrumbs, onMenuClick, showLogo, cust
                   ) : (
                     <button
                       onClick={handleSignIn}
-                      className="bg-black text-white px-4 py-2 rounded-sm text-sm font-medium hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-300"
+                      className="bg-gray-900 text-white px-4 py-2 rounded-sm text-sm font-medium hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-300"
                     >
                       Sign In
                     </button>
