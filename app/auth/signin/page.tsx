@@ -30,30 +30,14 @@ export default function SignInPage() {
 
   const handleGoogleSignIn = async () => {
     setGoogleLoading(true);
-    try {
-      const result = await signIn('google', { callbackUrl: '/dashboard' });
-      if (result?.error) {
-        console.error('Sign in error:', result.error);
-      }
-    } catch (error) {
-      console.error('Sign in error:', error);
-    } finally {
-      setGoogleLoading(false);
-    }
+    // Use redirect instead of waiting for result for faster UX
+    await signIn('google', { callbackUrl: '/dashboard', redirect: true });
   };
 
   const handleDiscordSignIn = async () => {
     setDiscordLoading(true);
-    try {
-      const result = await signIn('discord', { callbackUrl: '/dashboard' });
-      if (result?.error) {
-        console.error('Sign in error:', result.error);
-      }
-    } catch (error) {
-      console.error('Sign in error:', error);
-    } finally {
-      setDiscordLoading(false);
-    }
+    // Use redirect instead of waiting for result for faster UX
+    await signIn('discord', { callbackUrl: '/dashboard', redirect: true });
   };
 
   return (

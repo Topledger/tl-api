@@ -148,17 +148,8 @@ async function getOrCreateUser(profile: { sub?: string; email: string; name: str
       lastLogin: new Date().toISOString(),
     };
 
-    // Also maintain JSON file for backward compatibility
-    try {
-      const database = readUserDatabase();
-      const userKey = profile.email.replace(/[^a-zA-Z0-9]/g, '_');
-      database.users[userKey] = userData;
-      database.globalStats.totalUsers = Object.keys(database.users).length;
-      database.globalStats.lastUpdated = new Date().toISOString();
-      writeUserDatabase(database);
-    } catch (jsonError) {
-      console.error('Error updating JSON file (non-critical):', jsonError);
-    }
+    // Skip JSON file operations for performance
+    // JSON file is now only used as a fallback
 
     return userData;
   } catch (error) {
@@ -225,72 +216,28 @@ export const authOptions: NextAuthOptions = {
   ],
   callbacks: {
     async signIn({ profile }) {
-      // Store or update user in database
-      if (profile) {
-        await getOrCreateUser(profile as { sub?: string; email: string; name: string; picture?: string });
-      }
+      // Only basic validation on sign-in, don't do heavy DB operations
       return true;
     },
-    async session({ session }) {
-      if (session.user?.email) {
-        try {
-          // Try to get user from database first
-          const dbUser = await prisma.user.findUnique({
-            where: { email: session.user.email }
-          });
-
-          if (dbUser) {
-            session.user = {
-              ...session.user,
-              id: dbUser.id,
-              plan: dbUser.plan,
-              credits: {
-                used: 0,
-                remaining: dbUser.credits,
-                total: dbUser.credits,
-              },
-              billingCycle: {
-                start: new Date().toISOString().split('T')[0],
-                end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-              },
-            };
-          } else {
-            // Fallback to JSON file
-            const database = readUserDatabase();
-            const userKey = session.user.email.replace(/[^a-zA-Z0-9]/g, '_');
-            const userData = database.users[userKey];
-            if (userData) {
-              session.user = {
-                ...session.user,
-                id: userData.id,
-                plan: userData.plan,
-                credits: userData.credits,
-                billingCycle: userData.billingCycle,
-              };
-            }
-          }
-        } catch (error) {
-          console.error('Error getting user session data:', error);
-          // Fallback to JSON file
-          const database = readUserDatabase();
-          const userKey = session.user.email?.replace(/[^a-zA-Z0-9]/g, '_');
-          const userData = userKey ? database.users[userKey] : null;
-          if (userData) {
-            session.user = {
-              ...session.user,
-              id: userData.id,
-              plan: userData.plan,
-              credits: userData.credits,
-              billingCycle: userData.billingCycle,
-            };
-          }
-        }
+    async session({ session, token }) {
+      // Use cached data from JWT token instead of fresh DB queries
+      if (token.userData) {
+        session.user = {
+          ...session.user,
+          ...(token.userData as any),
+        };
       }
       return session;
     },
-    async jwt({ token, profile }) {
-      if (profile) {
-        token.userData = await getOrCreateUser(profile as { sub?: string; email: string; name: string; picture?: string });
+    async jwt({ token, profile, account }) {
+      // Only do user creation/update during initial sign-in
+      if (account && profile) {
+        try {
+          const userData = await getOrCreateUser(profile as { sub?: string; email: string; name: string; picture?: string });
+          token.userData = userData;
+        } catch (error) {
+          console.error('Error in JWT callback:', error);
+        }
       }
       return token;
     },
@@ -300,6 +247,11 @@ export const authOptions: NextAuthOptions = {
   },
   session: {
     strategy: 'jwt',
+    maxAge: 30 * 24 * 60 * 60, // 30 days
+    updateAge: 24 * 60 * 60, // 24 hours
+  },
+  jwt: {
+    maxAge: 30 * 24 * 60 * 60, // 30 days
   },
 };
 
