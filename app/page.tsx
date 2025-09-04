@@ -133,14 +133,14 @@ export default function HomePage() {
             <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-center mb-16 sm:mb-24">
               <button
                 onClick={handleGetStarted}
-                className="w-full sm:w-auto px-8 py-3 bg-gray-900 text-white text-sm font-medium hover:bg-gray-800 transition-colors duration-200"
+                className="w-auto sm:w-auto px-8 py-3 bg-gray-900 text-white text-sm font-medium hover:bg-gray-800 transition-colors duration-200"
               >
-                Get Started
+                Get Started for free
               </button>
               
               <button
                 onClick={handleViewDocs}
-                className="w-full sm:w-auto px-8 py-3 text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors duration-200"
+                className="w-full sm:w-auto px-8 py-3 text-sm sm:border sm:bg-white sm:border-gray-200 font-medium text-gray-600 hover:text-gray-900 transition-colors duration-200"
               >
                 View Documentation →
               </button>
