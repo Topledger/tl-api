@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { ChevronDownIcon, ChevronRightIcon, DocumentDuplicateIcon, CheckIcon } from '@heroicons/react/24/outline';
 import { useRouter } from 'next/navigation';
+import { useSession } from 'next-auth/react';
 import Header from '@/components/Layout/Header';
 import Footer from '@/components/Layout/Footer';
 import { copyToClipboard } from '@/lib/utils';
@@ -166,6 +167,7 @@ print(data)`
 
 export default function DocsPage() {
   const router = useRouter();
+  const { data: session } = useSession();
   const [apiData, setApiData] = useState<ApiData | null>(null);
   const [selectedApi, setSelectedApi] = useState<ApiItem | null>(null);
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
@@ -407,7 +409,7 @@ export default function DocsPage() {
           title="API Documentation"
           onMenuClick={() => setSidebarOpen(!sidebarOpen)}
           menuItems={[
-            { label: 'Home', href: '/' },
+            { label: 'Home', href: session ? '/dashboard' : '/' },
           ]}
           customButton={{
             label: 'Get Started',

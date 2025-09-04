@@ -48,7 +48,7 @@ export default function Header({ title, breadcrumbs, onMenuClick, showLogo, cust
   };
 
   const handleLogoClick = () => {
-    router.push('/');
+    router.push(session ? '/dashboard' : '/');
   };
 
   const displayUser = session?.user || user;

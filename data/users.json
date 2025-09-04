@@ -16,23 +16,24 @@
         "end": "2025-10-04"
       },
       "createdAt": "2025-08-30T12:34:32.964Z",
-      "lastLogin": "2025-09-04T09:13:34.715Z"
+      "lastLogin": "2025-09-04T12:02:38.806Z"
     },
     "urluckyturtle_gmail_com": {
-      "id": "user_1756897287961",
+      "id": "cmf3va9xm0004nsmaqm79aaax",
       "email": "urluckyturtle@gmail.com",
+      "name": "urluckyturtle.",
       "plan": "Basic",
       "credits": {
         "used": 0,
-        "remaining": 30000,
-        "total": 30000
+        "remaining": 5000,
+        "total": 5000
       },
       "billingCycle": {
-        "start": "2025-09-03",
-        "end": "2025-10-03"
+        "start": "2025-09-04",
+        "end": "2025-10-04"
       },
-      "createdAt": "2025-09-03T11:01:27.961Z",
-      "lastLogin": "2025-09-03T11:01:28.593Z"
+      "createdAt": "2025-09-03T11:01:31.210Z",
+      "lastLogin": "2025-09-04T12:00:06.675Z"
     },
     "T14SjkAr5Tc2oRaey9J8kgMau4VbdNqJidZrTPXgcNu_solana_wallet": {
       "id": "solana_1756906669186",
@@ -56,6 +57,6 @@
     "totalUsers": 3,
     "totalApiCalls": 0,
     "totalRevenue": 0,
-    "lastUpdated": "2025-09-04T09:13:34.716Z"
+    "lastUpdated": "2025-09-04T12:02:38.807Z"
   }
 }
