@@ -39,6 +39,14 @@ interface GroupedApis {
   };
 }
 
+interface ProjectGroupedApis {
+  [menuName: string]: {
+    [projectName: string]: {
+      [apiType: string]: ApiItem[];
+    };
+  };
+}
+
 // Helper function to add line numbers to code
 const addLineNumbers = (code: string) => {
   const lines = code.split('\n');
@@ -161,6 +169,7 @@ export default function DocsPage() {
   const [selectedApi, setSelectedApi] = useState<ApiItem | null>(null);
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
   const [expandedSubcategories, setExpandedSubcategories] = useState<Set<string>>(new Set());
+  const [expandedProjects, setExpandedProjects] = useState<Set<string>>(new Set());
   const [expandedColumns, setExpandedColumns] = useState<Set<number>>(new Set());
   const [isLoading, setIsLoading] = useState(true);
   const [sampleResponse, setSampleResponse] = useState<any>(null);
@@ -179,17 +188,39 @@ export default function DocsPage() {
         const data = await response.json();
         setApiData(data);
         
-        // Auto-expand all categories initially
-        const uniqueMenuNames = [...new Set(data.apis.map((api: any) => api.menuName as string))];
-        setExpandedCategories(new Set(uniqueMenuNames as string[]));
-        
-        // Auto-expand all subcategories initially
-        const uniqueSubcategories = [...new Set(data.apis.map((api: any) => `${api.menuName}-${api.pageName}` as string))];
-        setExpandedSubcategories(new Set(uniqueSubcategories as string[]));
-        
-        // Select first API by default
+        // Select first API by default and expand necessary categories to show it
         if (data.apis.length > 0) {
-          setSelectedApi(data.apis[0]);
+          const firstApi = data.apis[0];
+          setSelectedApi(firstApi);
+          
+          // Expand the category containing the first API
+          setExpandedCategories(new Set([firstApi.menuName]));
+          
+          // If it's a Projects category, also expand the project
+          if (firstApi.menuName === 'Projects' && firstApi.page) {
+            const parts = firstApi.page.split('-');
+            const firstPart = parts[0];
+            
+            // Extract project name using same logic
+            let projectName = '';
+            if (firstPart === 'sol' && parts.length > 1 && parts[1] === 'strategies') {
+              projectName = 'sol-strategies';
+            } else {
+              projectName = firstPart;
+            }
+            
+            setExpandedProjects(new Set([projectName]));
+            setExpandedSubcategories(new Set([`${firstApi.menuName}-${projectName}-${firstApi.pageName}`]));
+          } else {
+            // For non-Projects categories, expand the subcategory
+            setExpandedSubcategories(new Set([`${firstApi.menuName}-${firstApi.pageName}`]));
+            setExpandedProjects(new Set());
+          }
+        } else {
+          // Keep all categories collapsed if no APIs
+          setExpandedCategories(new Set());
+          setExpandedSubcategories(new Set());
+          setExpandedProjects(new Set());
         }
       }
     } catch (error) {
@@ -230,15 +261,43 @@ export default function DocsPage() {
     }
   }, [selectedApi?.id]);
 
-  // Group APIs by category and subcategory
-  const groupedApis = apiData?.apis.reduce((acc: GroupedApis, api) => {
+  // Group APIs by category and subcategory (with special handling for Projects)
+  const groupedApis: GroupedApis | ProjectGroupedApis = apiData?.apis.reduce((acc: any, api) => {
     if (!acc[api.menuName]) {
       acc[api.menuName] = {};
     }
-    if (!acc[api.menuName][api.pageName]) {
-      acc[api.menuName][api.pageName] = [];
+    
+    // Special handling for Projects category - group by project name first
+    if (api.menuName === 'Projects' && api.page) {
+      // Extract core project name using same logic as dashboard
+      const parts = api.page.split('-');
+      const firstPart = parts[0];
+      
+      // Special case: sol-strategies should be kept together
+      let projectName = '';
+      if (firstPart === 'sol' && parts.length > 1 && parts[1] === 'strategies') {
+        projectName = 'sol-strategies';
+      } else {
+        // For all other cases, just take the first part (core project name)
+        projectName = firstPart;
+      }
+      
+      // Group by project name, then by API type (pageName)
+      if (!acc[api.menuName][projectName]) {
+        acc[api.menuName][projectName] = {};
+      }
+      if (!acc[api.menuName][projectName][api.pageName]) {
+        acc[api.menuName][projectName][api.pageName] = [];
+      }
+      acc[api.menuName][projectName][api.pageName].push(api);
+    } else {
+      // Regular two-level grouping for other categories
+      if (!acc[api.menuName][api.pageName]) {
+        acc[api.menuName][api.pageName] = [];
+      }
+      acc[api.menuName][api.pageName].push(api);
     }
-    acc[api.menuName][api.pageName].push(api);
+    
     return acc;
   }, {}) || {};
 
@@ -261,6 +320,18 @@ export default function DocsPage() {
         newSet.delete(subcategory);
       } else {
         newSet.add(subcategory);
+      }
+      return newSet;
+    });
+  };
+
+  const toggleProject = (project: string) => {
+    setExpandedProjects(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(project)) {
+        newSet.delete(project);
+      } else {
+        newSet.add(project);
       }
       return newSet;
     });
@@ -334,73 +405,148 @@ export default function DocsPage() {
       {/* Main Content */}
       <div className="flex-1 flex max-w-9xl mx-auto w-full">
         {/* Sidebar */}
-        <aside className="w-64 bg-white border-r border-gray-200 overflow-y-auto h-[calc(100vh-73px)] sticky top-[73px]">
-          <div className="px-4 py-6">
-            <h2 className="text-sm font-medium text-gray-900 mb-4">API Reference</h2>
+        <aside className="w-60 bg-white border-r border-gray-200 overflow-y-auto h-[calc(100vh-73px)] sticky top-[73px]">
+          <div className="px-3 py-4">
+            <h2 className="text-xs font-medium text-gray-500 mb-3 tracking-wide">API Reference</h2>
             
             {/* API Navigation Tree */}
-            <div className="space-y-1">
-              {Object.entries(groupedApis).map(([categoryName, subcategories]) => (
-                <div key={categoryName}>
-                  <button
-                    onClick={() => toggleCategory(categoryName)}
-                    className="flex items-center w-full text-left px-3 py-2 text-sm font-medium text-gray-500 hover:bg-blue-50/50 hover:text-gray-900 transition-colors"
-                  >
-                    {expandedCategories.has(categoryName) ? (
-                      <ChevronDownIcon className="h-4 w-4 mr-2 text-gray-500" />
-                    ) : (
-                      <ChevronRightIcon className="h-4 w-4 mr-2 text-gray-500" />
-                    )}
-                    {categoryName}
-                    <span className="ml-auto text-xs text-gray-500">
-                      {Object.values(subcategories).reduce((total, apis) => total + apis.length, 0)}
-                    </span>
-                  </button>
-                  
-                  {expandedCategories.has(categoryName) && (
-                    <div className="ml-6 mt-1 space-y-1">
-                      {Object.entries(subcategories).map(([subcategoryName, apis]) => {
-                        const subcategoryKey = `${categoryName}-${subcategoryName}`;
-                        return (
-                          <div key={subcategoryKey}>
-                            <button
-                              onClick={() => toggleSubcategory(subcategoryKey)}
-                              className="flex items-center w-full text-left py-1.5 px-3 text-sm text-gray-500 hover:bg-blue-50/50 hover:text-gray-900 transition-colors"
-                            >
-                              {expandedSubcategories.has(subcategoryKey) ? (
-                                <ChevronDownIcon className="h-3 w-3 mr-2 text-gray-400" />
-                              ) : (
-                                <ChevronRightIcon className="h-3 w-3 mr-2 text-gray-400" />
-                              )}
-                              {subcategoryName}
-                              <span className="ml-auto text-xs text-gray-400">{apis.length}</span>
-                            </button>
+            <div className="space-y-0.5">
+              {Object.entries(groupedApis as any).map(([categoryName, subcategories]: [string, any]) => {
+                // Calculate total API count for the category
+                const totalCount = categoryName === 'Projects' 
+                  ? Object.values(subcategories as any).reduce((total: number, projects: any) => 
+                      total + Object.values(projects as any).reduce((subTotal: number, apis: any) => subTotal + (apis as any[]).length, 0), 0)
+                  : Object.values(subcategories as any).reduce((total: number, apis: any) => total + (apis as any[]).length, 0);
+
+                return (
+                  <div key={categoryName}>
+                    <button
+                      onClick={() => toggleCategory(categoryName)}
+                      className="flex items-center w-full text-left px-2 py-1.5 text-xs font-medium text-gray-700 hover:bg-blue-50/50 hover:text-gray-900 transition-colors rounded-sm"
+                    >
+                      {expandedCategories.has(categoryName) ? (
+                        <ChevronDownIcon className="h-3 w-3 mr-1.5 text-gray-500" />
+                      ) : (
+                        <ChevronRightIcon className="h-3 w-3 mr-1.5 text-gray-500" />
+                      )}
+                      {categoryName}
+                      <span className="ml-auto text-xs text-gray-400 font-normal">
+                        {totalCount}
+                      </span>
+                    </button>
+                    
+                    {expandedCategories.has(categoryName) && (
+                      <div className="ml-4 mt-0.5 space-y-0.5">
+                        {categoryName === 'Projects' ? (
+                          // Three-level structure for Projects: Projects > Project Name > API Type > APIs
+                          Object.entries(subcategories as any).map(([projectName, apiTypes]: [string, any]) => {
+                            const projectCount = Object.values(apiTypes as any).reduce((total: number, apis: any) => total + (apis as any[]).length, 0);
                             
-                            {expandedSubcategories.has(subcategoryKey) && (
-                              <div className="ml-5 mt-1 space-y-0.5">
-                                {apis.map((api) => (
-                                  <button
-                                    key={api.id}
-                                    onClick={() => setSelectedApi(api)}
-                                    className={`block w-full text-left px-3 py-2 text-sm transition-colors ${
-                                      selectedApi?.id === api.id
-                                        ? 'bg-blue-50 text-gray-600 border-r-2 border-blue-500'
-                                        : 'text-gray-500 hover:bg-blue-50/50 hover:text-gray-900'
-                                    }`}
-                                  >
-                                    <div className="font-normal">{api.title}</div>
-                                    
-                                  </button>
-                                ))}
+                            return (
+                              <div key={projectName}>
+                                <button
+                                  onClick={() => toggleProject(projectName)}
+                                  className="flex items-center w-full text-left py-1 px-2 text-xs text-gray-600 hover:bg-blue-50/50 hover:text-gray-900 transition-colors rounded-sm"
+                                >
+                                  {expandedProjects.has(projectName) ? (
+                                    <ChevronDownIcon className="h-3 w-3 mr-1.5 text-gray-400" />
+                                  ) : (
+                                    <ChevronRightIcon className="h-3 w-3 mr-1.5 text-gray-400" />
+                                  )}
+                                  {projectName.charAt(0).toUpperCase() + projectName.slice(1)}
+                                  <span className="ml-auto text-xs text-gray-400 font-normal">{projectCount}</span>
+                                </button>
+                                
+                                {expandedProjects.has(projectName) && (
+                                  <div className="ml-4 mt-0.5 space-y-0.5">
+                                    {Object.entries(apiTypes as any).map(([apiTypeName, apis]: [string, any]) => {
+                                      const apiTypeKey = `${categoryName}-${projectName}-${apiTypeName}`;
+                                      
+                                      return (
+                                        <div key={apiTypeKey}>
+                                          <button
+                                            onClick={() => toggleSubcategory(apiTypeKey)}
+                                            className="flex items-center w-full text-left py-1 px-2 text-xs text-gray-500 hover:bg-blue-50/50 hover:text-gray-900 transition-colors rounded-sm"
+                                          >
+                                            {expandedSubcategories.has(apiTypeKey) ? (
+                                              <ChevronDownIcon className="h-3 w-3 mr-1.5 text-gray-400" />
+                                            ) : (
+                                              <ChevronRightIcon className="h-3 w-3 mr-1.5 text-gray-400" />
+                                            )}
+                                            {apiTypeName}
+                                            <span className="ml-auto text-xs text-gray-400 font-normal">{(apis as any[]).length}</span>
+                                          </button>
+                                          
+                                          {expandedSubcategories.has(apiTypeKey) && (
+                                            <div className="ml-4 mt-0.5 space-y-0.5">
+                                              {(apis as any[]).map((api: any) => (
+                                                <button
+                                                  key={api.id}
+                                                  onClick={() => setSelectedApi(api)}
+                                                  className={`block w-full text-left px-2 py-1.5 text-xs transition-colors rounded-sm ${
+                                                    selectedApi?.id === api.id
+                                                      ? 'bg-blue-50 text-blue-700 border-r-2 border-blue-500'
+                                                      : 'text-gray-500 hover:bg-blue-50/50 hover:text-gray-900'
+                                                  }`}
+                                                >
+                                                  <div className="font-normal truncate">{api.title}</div>
+                                                </button>
+                                              ))}
+                                            </div>
+                                          )}
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+                                )}
                               </div>
-                            )}
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
-              ))}
+                            );
+                          })
+                        ) : (
+                          // Two-level structure for other categories: Category > Subcategory > APIs
+                          Object.entries(subcategories as any).map(([subcategoryName, apis]: [string, any]) => {
+                            const subcategoryKey = `${categoryName}-${subcategoryName}`;
+                            return (
+                              <div key={subcategoryKey}>
+                                <button
+                                  onClick={() => toggleSubcategory(subcategoryKey)}
+                                  className="flex items-center w-full text-left py-1 px-2 text-xs text-gray-600 hover:bg-blue-50/50 hover:text-gray-900 transition-colors rounded-sm"
+                                >
+                                  {expandedSubcategories.has(subcategoryKey) ? (
+                                    <ChevronDownIcon className="h-3 w-3 mr-1.5 text-gray-400" />
+                                  ) : (
+                                    <ChevronRightIcon className="h-3 w-3 mr-1.5 text-gray-400" />
+                                  )}
+                                  {subcategoryName}
+                                  <span className="ml-auto text-xs text-gray-400 font-normal">{(apis as any[]).length}</span>
+                                </button>
+                                
+                                {expandedSubcategories.has(subcategoryKey) && (
+                                  <div className="ml-4 mt-0.5 space-y-0.5">
+                                    {(apis as any[]).map((api: any) => (
+                                      <button
+                                        key={api.id}
+                                        onClick={() => setSelectedApi(api)}
+                                        className={`block w-full text-left px-2 py-1.5 text-xs transition-colors rounded-sm ${
+                                          selectedApi?.id === api.id
+                                            ? 'bg-blue-50 text-blue-700 border-r-2 border-blue-500'
+                                            : 'text-gray-500 hover:bg-blue-50/50 hover:text-gray-900'
+                                        }`}
+                                      >
+                                        <div className="font-normal truncate">{api.title}</div>
+                                      </button>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           </div>
         </aside>
