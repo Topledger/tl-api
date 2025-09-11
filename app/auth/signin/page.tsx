@@ -59,34 +59,7 @@ export default function SignInPage() {
 
           <rect width="100%" height="100%" fill="url(#hexPattern)" />
 
-          {/* Large accent hexagons */}
-          <g opacity="0.4">
-            <polygon
-              points="200,100 270,140 270,220 200,260 130,220 130,140"
-              fill="none"
-              stroke="#e5e7eb"
-              strokeWidth="1"
-            />
-            <polygon
-              points="700,300 770,340 770,420 700,460 630,420 630,340"
-              fill="none"
-              stroke="#e5e7eb"
-              strokeWidth="1"
-            />
-            <polygon
-              points="400,600 470,640 470,720 400,760 330,720 330,640"
-              fill="none"
-              stroke="#e5e7eb"
-              strokeWidth="1"
-            />
-          </g>
-
-          {/* Connecting lines */}
-          <g opacity="0.3">
-            <line x1="200" y1="260" x2="630" y2="340" stroke="#e5e7eb" strokeWidth="1"/>
-            <line x1="270" y1="220" x2="700" y2="300" stroke="#e5e7eb" strokeWidth="1"/>
-            <line x1="700" y1="460" x2="400" y2="600" stroke="#e5e7eb" strokeWidth="1"/>
-          </g>
+          
 
           {/* Small geometric shapes */}
           <g opacity="0.5">

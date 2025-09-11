@@ -20,7 +20,7 @@ const navigation = [
   { name: 'Explore APIs', href: '/dashboard', icon: HomeIcon },
   { name: 'API Keys', href: '/keys', icon: KeyIcon },
   { name: 'Usage', href: '/usage', icon: ChartBarIcon },
-  { name: 'Documentation', href: '/docs', icon: DocumentTextIcon },
+  //{ name: 'Documentation', href: '/docs', icon: DocumentTextIcon },
   //{ name: 'Pricing', href: '/plans', icon: CurrencyDollarIcon },
   //{ name: 'Settings', href: '/settings', icon: CogIcon },
 ];

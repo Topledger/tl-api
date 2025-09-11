@@ -64,12 +64,12 @@ export default function MainLayout({
       // If not authenticated, show sign in option, otherwise show dashboard
       return session ? [{ label: 'Dashboard', href: '/dashboard' }] : [{ label: 'Home', href: '/' }];
     } else if (pathname === '/dashboard') {
-      return [{ label: 'Docs', href: '/docs' }];
+      return [{ label: 'Documentation', href: '/docs' }];
     } else {
       // For other pages, show both options
       return [
         { label: 'Dashboard', href: '/dashboard' },
-        { label: 'Docs', href: '/docs' }
+        { label: 'Documentation', href: '/docs' }
       ];
     }
   };
