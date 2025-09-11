@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import Sidebar from './Sidebar';
 import Header from './Header';
 import Footer from './Footer';
@@ -16,21 +16,63 @@ interface MainLayoutProps {
   children: React.ReactNode;
   title?: string;
   breadcrumbs?: BreadcrumbItem[];
+  // Docs-specific props
+  isDocsMode?: boolean;
+  groupedApis?: any;
+  selectedApi?: any;
+  expandedCategories?: Set<string>;
+  expandedSubcategories?: Set<string>;
+  expandedProjects?: Set<string>;
+  onApiSelect?: (api: any) => void;
+  onToggleCategory?: (category: string) => void;
+  onToggleSubcategory?: (subcategory: string) => void;
+  onToggleProject?: (project: string) => void;
 }
 
-export default function MainLayout({ children, title, breadcrumbs }: MainLayoutProps) {
+export default function MainLayout({ 
+  children, 
+  title, 
+  breadcrumbs, 
+  isDocsMode = false,
+  groupedApis,
+  selectedApi,
+  expandedCategories,
+  expandedSubcategories,
+  expandedProjects,
+  onApiSelect,
+  onToggleCategory,
+  onToggleSubcategory,
+  onToggleProject
+}: MainLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { data: session, status } = useSession();
   const router = useRouter();
+  const pathname = usePathname();
 
   useEffect(() => {
-    // Redirect to sign in if not authenticated
+    // Redirect to sign in if not authenticated, except for docs page
     if (status === 'loading') return; // Still loading
-    if (!session) {
+    if (!session && pathname !== '/docs') {
       router.push('/auth/signin');
       return;
     }
-  }, [session, status, router]);
+  }, [session, status, router, pathname]);
+
+  // Determine contextual menu items based on current page
+  const getContextualMenuItems = () => {
+    if (pathname === '/docs') {
+      // If not authenticated, show sign in option, otherwise show dashboard
+      return session ? [{ label: 'Dashboard', href: '/dashboard' }] : [{ label: 'Home', href: '/' }];
+    } else if (pathname === '/dashboard') {
+      return [{ label: 'Docs', href: '/docs' }];
+    } else {
+      // For other pages, show both options
+      return [
+        { label: 'Dashboard', href: '/dashboard' },
+        { label: 'Docs', href: '/docs' }
+      ];
+    }
+  };
 
   // Show loading while checking authentication
   if (status === 'loading') {
@@ -41,15 +83,28 @@ export default function MainLayout({ children, title, breadcrumbs }: MainLayoutP
     );
   }
 
-  // Don't render if not authenticated
-  if (!session) {
+  // Don't render if not authenticated (except for docs page)
+  if (!session && pathname !== '/docs') {
     return null;
   }
 
   return (
     <div className="min-h-screen flex bg-gray-100">
       {/* Sidebar */}
-      <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+      <Sidebar 
+        isOpen={sidebarOpen} 
+        onClose={() => setSidebarOpen(false)}
+        isDocsMode={isDocsMode}
+        groupedApis={groupedApis}
+        selectedApi={selectedApi}
+        expandedCategories={expandedCategories}
+        expandedSubcategories={expandedSubcategories}
+        expandedProjects={expandedProjects}
+        onApiSelect={onApiSelect}
+        onToggleCategory={onToggleCategory}
+        onToggleSubcategory={onToggleSubcategory}
+        onToggleProject={onToggleProject}
+      />
       
       {/* Main content */}
       <div className="flex-1 flex flex-col">
@@ -57,6 +112,7 @@ export default function MainLayout({ children, title, breadcrumbs }: MainLayoutP
           title={title}
           breadcrumbs={breadcrumbs}
           onMenuClick={() => setSidebarOpen(true)}
+          menuItems={getContextualMenuItems()}
         />
         
         <main className="flex-1 bg-gray-50 p-6">
