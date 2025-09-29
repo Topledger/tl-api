@@ -119,11 +119,11 @@ export default function Sidebar({
                 onClick={handleLogoClick}
                 className="focus:outline-none rounded-sm transition-opacity hover:opacity-80"
               >
-                <img 
-                  src="https://topledger.xyz/assets/images/logo/topledger-full.svg?imwidth=384"
-                  alt="Top Ledger Logo"
-                  className="h-8 w-auto"
-                />
+              <img 
+                src="https://topledger.xyz/assets/images/logo/topledger-full.svg?imwidth=384"
+                alt="Top Ledger Logo"
+                className="h-8 w-auto"
+              />
               </button>
               
             </div>

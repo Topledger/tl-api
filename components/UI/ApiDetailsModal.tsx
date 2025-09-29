@@ -61,10 +61,10 @@ const UsageExamplesTabs: React.FC<{
 
   const tabs = [
     { id: 'curl', label: 'cURL', content: curlExample },
-    { id: 'js', label: 'JS', content: fetchExample },
+    { id: 'js', label: 'JavaScript', content: fetchExample },
     { 
       id: 'python', 
-      label: 'PY', 
+      label: 'Python', 
       content: `import requests
 
 response = requests.get('${fullEndpointUrl}')
