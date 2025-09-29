@@ -87,13 +87,10 @@ export default function ExplorePage() {
         
         // Extract unique project names from "page" field for Projects category
         const projectsApis = data.apis.filter((api: any) => api.menuName === 'Projects');
-        console.log('📊 Projects APIs found:', projectsApis.length);
-        console.log('🔍 Sample project API:', projectsApis[0]);
         
         const uniqueProjectNames = [...new Set(
           projectsApis
             .map((api: any) => {
-              console.log('🎯 Processing page field:', api.page);
               if (!api.page) return null;
               
               // Extract core project name - always take the first part
@@ -114,8 +111,6 @@ export default function ExplorePage() {
             })
             .filter(Boolean) // Remove any undefined/empty values
         )].sort();
-        
-        console.log('📝 Unique project names extracted:', uniqueProjectNames);
         
         setMenuNames(uniqueMenuNames as string[]);
         setPageNames(uniquePageNames as string[]);

@@ -134,7 +134,7 @@ export async function deductUserCredits(userId: string, amount: number = 1): Pro
     }
 
     if (user.credits < amount) {
-      console.log(`Insufficient credits for user: ${userId}. Has ${user.credits}, needs ${amount}`);
+      // Insufficient credits for user
       return false;
     }
 
@@ -145,7 +145,7 @@ export async function deductUserCredits(userId: string, amount: number = 1): Pro
       }
     });
 
-    console.log(`Deducted ${amount} credits from user: ${userId}. Remaining: ${user.credits - amount}`);
+    // Credits deducted successfully
     return true;
   } catch (error) {
     console.error('Error deducting user credits:', error);

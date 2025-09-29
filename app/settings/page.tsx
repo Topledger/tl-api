@@ -29,12 +29,10 @@ export default function SettingsPage() {
   };
 
   const handleUpgradePlan = () => {
-    console.log('Upgrading plan...');
     // Implementation for plan upgrade
   };
 
   const handleCancelPlan = () => {
-    console.log('Canceling plan...');
     setShowCancelModal(false);
     // Implementation for plan cancellation
   };
@@ -42,7 +40,6 @@ export default function SettingsPage() {
   const handleSaveEmail = () => {
     setIsEditingEmail(false);
     // Implementation for saving email
-    console.log('Saving email:', email);
   };
 
   return (

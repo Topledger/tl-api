@@ -179,7 +179,10 @@ const ApiDetailsModal: React.FC<ApiDetailsModalProps> = ({
   const fetchExample = fullEndpointUrl 
     ? `fetch('${fullEndpointUrl}')
   .then(response => response.json())
-  .then(data => console.log(data))
+  .then(data => {
+    // Handle your data here
+    return data;
+  })
   .catch(error => console.error('Error:', error));`
     : '';
 
@@ -232,10 +235,6 @@ const ApiDetailsModal: React.FC<ApiDetailsModalProps> = ({
     if (isOpen && api && selectedApiKey) {
       setSampleResponse(null);
       setCopied(false);
-      // Debug: Log API data to see what we're receiving
-      console.log('API Data in Modal:', api);
-      console.log('API Response Columns:', api.responseColumns);
-      console.log('API Description:', api.description);
       // Auto-fetch sample response when modal opens
       fetchSampleResponse();
     }

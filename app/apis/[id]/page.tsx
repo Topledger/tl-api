@@ -82,7 +82,7 @@ export default function ApiDetailsPage() {
     if (apiEndpoint) {
       try {
         await copyToClipboard(apiEndpoint.path);
-        console.log('Endpoint copied to clipboard');
+        // Endpoint copied to clipboard
       } catch (error) {
         console.error('Failed to copy endpoint:', error);
       }

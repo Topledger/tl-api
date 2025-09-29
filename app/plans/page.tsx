@@ -75,7 +75,7 @@ export default function PlansPage() {
     setIsProcessing(true);
     try {
       // Here you would integrate with your crypto payment processor
-      console.log(`Upgrading to ${planName} plan for $${price}`);
+      // Upgrading to plan
       
       // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 2000));

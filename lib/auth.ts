@@ -113,7 +113,7 @@ async function getOrCreateUser(profile: { sub?: string; email: string; name: str
         }
       });
 
-      console.log(`✅ Created new user in database: ${user.email} with ${user.credits} credits`);
+      // Created new user in database
     } else {
       // Update existing user
       user = await prisma.user.update({
@@ -125,7 +125,7 @@ async function getOrCreateUser(profile: { sub?: string; email: string; name: str
         }
       });
 
-      console.log(`🔄 Updated existing user: ${user.email} (${user.credits} credits remaining)`);
+      // Updated existing user
     }
 
     // Convert database user to UserData format for compatibility
@@ -156,7 +156,7 @@ async function getOrCreateUser(profile: { sub?: string; email: string; name: str
     console.error('Error in getOrCreateUser:', error);
     
     // Fallback to JSON file system
-    console.log('Falling back to JSON file system...');
+    // Falling back to JSON file system
     return getOrCreateUserFromJSON(profile);
   }
 }

@@ -34,7 +34,7 @@ export default function ApiKeysPage() {
       if (!response.ok) {
         // Retry once if it's a 500 error and we haven't retried yet
         if (response.status === 500 && retryCount < 1) {
-          console.log('Retrying API call after 500 error...');
+          // Retrying API call after 500 error
           await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1 second
           return loadApiKeys(retryCount + 1);
         }

@@ -386,7 +386,10 @@ export default function DocsPage() {
   const fetchExample = fullEndpointUrl 
     ? `fetch('${fullEndpointUrl}')
   .then(response => response.json())
-  .then(data => console.log(data))
+  .then(data => {
+    // Handle your data here
+    return data;
+  })
   .catch(error => console.error('Error:', error));`
     : '';
 
