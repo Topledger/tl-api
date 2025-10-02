@@ -219,6 +219,22 @@ export const authOptions: NextAuthOptions = {
       // Only basic validation on sign-in, don't do heavy DB operations
       return true;
     },
+    async redirect({ url, baseUrl }) {
+      // If coming from docs page with callbackUrl=/keys, redirect to /keys
+      if (url.includes('callbackUrl=/keys')) {
+        return `${baseUrl}/keys`;
+      }
+      // If url is a relative path, make it absolute
+      if (url.startsWith('/')) {
+        return `${baseUrl}${url}`;
+      }
+      // If url is on the same origin, allow it
+      if (url.startsWith(baseUrl)) {
+        return url;
+      }
+      // Default redirect to dashboard
+      return `${baseUrl}/dashboard`;
+    },
     async session({ session, token }) {
       // Use cached data from JWT token instead of fresh DB queries
       if (token.userData) {

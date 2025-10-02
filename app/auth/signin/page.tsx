@@ -1,16 +1,20 @@
 'use client';
 
 import { signIn, getSession } from 'next-auth/react';
-import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { useEffect, useState, Suspense } from 'react';
 import Button from '@/components/UI/Button';
 import Header from '@/components/Layout/Header';
 import Footer from '@/components/Layout/Footer';
 
-export default function SignInPage() {
+function SignInContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [googleLoading, setGoogleLoading] = useState(false);
   const [discordLoading, setDiscordLoading] = useState(false);
+  
+  // Get callbackUrl from URL parameters
+  const callbackUrl = searchParams?.get('callbackUrl') || '/dashboard';
 
   useEffect(() => {
     // Check if user is already signed in
@@ -31,13 +35,13 @@ export default function SignInPage() {
   const handleGoogleSignIn = async () => {
     setGoogleLoading(true);
     // Use redirect instead of waiting for result for faster UX
-    await signIn('google', { callbackUrl: '/dashboard', redirect: true });
+    await signIn('google', { callbackUrl, redirect: true });
   };
 
   const handleDiscordSignIn = async () => {
     setDiscordLoading(true);
     // Use redirect instead of waiting for result for faster UX
-    await signIn('discord', { callbackUrl: '/dashboard', redirect: true });
+    await signIn('discord', { callbackUrl, redirect: true });
   };
 
   return (
@@ -152,5 +156,17 @@ export default function SignInPage() {
         <Footer />
       </div>
     </div>
+  );
+}
+
+export default function SignInPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      </div>
+    }>
+      <SignInContent />
+    </Suspense>
   );
 } 

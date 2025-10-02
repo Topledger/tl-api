@@ -159,6 +159,7 @@ const ApiDetailsModal: React.FC<ApiDetailsModalProps> = ({
   selectedApiKey
 }) => {
   const [copied, setCopied] = useState(false);
+  const [copiedResponse, setCopiedResponse] = useState(false);
   const [sampleResponse, setSampleResponse] = useState<any>(null);
   const [loadingResponse, setLoadingResponse] = useState(false);
   const [expandedRows, setExpandedRows] = useState<Set<number>>(new Set());
@@ -390,11 +391,34 @@ const ApiDetailsModal: React.FC<ApiDetailsModalProps> = ({
             <div>
               <div className="flex items-center justify-between mb-3">
                 <h4 className="font-medium text-sm text-gray-600">Response snippet</h4>
-               
               </div>
               
               <div className="border border-gray-200 rounded-sm overflow-hidden h-80">
                 <div className="bg-white h-full flex flex-col">
+                  {/* Header with .json label and copy button - matching usage examples style */}
+                  <div className="flex border-b border-gray-200 bg-blue-50/50 rounded-sm">
+                    <div className="flex-1 px-2 py-2 text-xs font-medium text-gray-500 bg-gray-50 shadow-sm">
+                      JSON
+                    </div>
+                    <button
+                      onClick={async () => {
+                        if (sampleResponse) {
+                          const jsonString = JSON.stringify(sampleResponse, null, 2);
+                          await copyToClipboard(jsonString);
+                          setCopiedResponse(true);
+                          setTimeout(() => setCopiedResponse(false), 2000);
+                        }
+                      }}
+                      className="px-3 py-2 text-xs transition-all duration-200 border-l border-gray-200 bg-gray-50/50 text-gray-500 hover:text-gray-700 hover:bg-gray-50"
+                      title="Copy response"
+                    >
+                      {copiedResponse ? (
+                        <CheckIcon className="h-3 w-3" />
+                      ) : (
+                        <DocumentDuplicateIcon className="h-3 w-3" />
+                      )}
+                    </button>
+                  </div>
                   <div className="flex-1 overflow-hidden">
                     {sampleResponse ? (
                       (() => {

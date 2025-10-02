@@ -177,10 +177,28 @@ export default function DocsPage() {
   const [sampleResponse, setSampleResponse] = useState<any>(null);
   const [loadingResponse, setLoadingResponse] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [copiedResponse, setCopiedResponse] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [apiKeys, setApiKeys] = useState<any[]>([]);
+  const [selectedApiKey, setSelectedApiKey] = useState('');
+  const [showApiKeyDropdown, setShowApiKeyDropdown] = useState(false);
 
   useEffect(() => {
     loadData();
+  }, []);
+
+  // Close API key dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (!(event.target as Element).closest('.dropdown-container')) {
+        setShowApiKeyDropdown(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
   }, []);
 
   // Hook to detect mobile screen size
@@ -235,6 +253,19 @@ export default function DocsPage() {
           setExpandedCategories(new Set());
           setExpandedSubcategories(new Set());
           setExpandedProjects(new Set());
+        }
+      }
+
+      // Load API keys from our API
+      const keysResponse = await fetch('/api/keys');
+      if (keysResponse.ok) {
+        const keysData = await keysResponse.json();
+        const keys = Array.isArray(keysData) ? keysData : [];
+        setApiKeys(keys);
+
+        // Set first API key as default
+        if (keys.length > 0) {
+          setSelectedApiKey(keys[0].id);
         }
       }
     } catch (error) {
@@ -364,10 +395,6 @@ export default function DocsPage() {
   };
 
   const handleCopyEndpoint = async () => {
-    const fullEndpointUrl = selectedApi 
-      ? `${window.location.origin}${selectedApi.wrapperUrl}?api_key=YOUR_API_KEY`
-      : '';
-    
     if (fullEndpointUrl) {
       await copyToClipboard(fullEndpointUrl);
       setCopied(true);
@@ -375,8 +402,12 @@ export default function DocsPage() {
     }
   };
 
+  // Get the selected API key
+  const selectedKey = Array.isArray(apiKeys) ? apiKeys.find(key => key.id === selectedApiKey) : null;
+  const apiKeyValue = selectedKey?.key || 'YOUR_API_KEY';
+
   const fullEndpointUrl = selectedApi 
-    ? `${typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000'}${selectedApi.wrapperUrl}?api_key=YOUR_API_KEY`
+    ? `${typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000'}${selectedApi.wrapperUrl}?api_key=${apiKeyValue}`
     : '';
 
   const curlExample = fullEndpointUrl 
@@ -403,7 +434,7 @@ export default function DocsPage() {
 
   return (
     <MainLayout 
-      title="API Documentation"
+          title="API Documentation"
       isDocsMode={true}
       groupedApis={groupedApis}
       selectedApi={selectedApi}
@@ -419,11 +450,71 @@ export default function DocsPage() {
         <div className="max-w-7xl mx-auto">
               {/* API Header */}
               <div className="mb-6">
-                <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 mb-3">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-3 mb-3">
+                  <div className="flex items-center gap-2">
                   <h1 className="text-lg sm:text-md font-semibold text-gray-900">{selectedApi.title}</h1>
                   <span className="inline-flex items-center px-2.5 py-0.5 rounded-sm text-xs font-medium bg-green-100 text-green-800 w-fit">
                     {selectedApi.method}
                   </span>
+                  </div>
+                  {!session ? (
+                    <button
+                      onClick={() => {
+                        // Store the current URL to redirect back after login
+                        const currentUrl = window.location.pathname + window.location.search;
+                        sessionStorage.setItem('redirectAfterLogin', currentUrl);
+                        // Redirect to login with a callback to keys page
+                        router.push('/auth/signin?callbackUrl=/keys');
+                      }}
+                      className="px-4 py-2 text-sm sm:border sm:bg-white sm:border-gray-200 font-medium text-gray-600 hover:text-white hover:bg-gray-900 transition-colors duration-200"
+                    >
+                      Get API Key →
+                    </button>
+                  ) : (
+                    <div className="w-[200px] relative dropdown-container">
+                      <div className="flex bg-white border border-gray-200 rounded-sm transition-shadow duration-200 overflow-hidden">
+                        {/* Left section - Key label */}
+                        <div className="bg-gradient-to-r from-gray-50 to-gray-100 border-r border-gray-200 px-3 py-2 flex items-center">
+                          <span className="text-xs font-normal text-gray-500 tracking-wider">KEY</span>
+                        </div>
+                        {/* Right section - Dropdown area */}
+                        <button
+                          type="button"
+                          className="flex-1 py-2 px-3 text-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-inset flex items-center justify-between group"
+                          onClick={() => setShowApiKeyDropdown(!showApiKeyDropdown)}
+                        >
+                          <span className={`truncate ${!selectedApiKey ? 'text-gray-400' : ''}`}>
+                            {selectedApiKey 
+                              ? Array.isArray(apiKeys) && apiKeys.find(key => key.id === selectedApiKey)?.name 
+                              : 'Select API key'
+                            }
+                          </span>
+                          <ChevronDownIcon className={`h-4 w-4 text-gray-400 ml-2 flex-shrink-0 transition-transform duration-200 ${showApiKeyDropdown ? 'rotate-180' : ''} group-hover:text-gray-600`} />
+                        </button>
+                      </div>
+                      
+                      {showApiKeyDropdown && (
+                        <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-sm shadow-md border border-gray-200 py-1 focus:outline-none z-50 max-h-60 overflow-auto">
+                          {Array.isArray(apiKeys) && apiKeys.map((key) => (
+                            <button
+                              key={key.id}
+                              type="button"
+                              className="block w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors duration-150"
+                              onClick={() => {
+                                setSelectedApiKey(key.id);
+                                setShowApiKeyDropdown(false);
+                              }}
+                            >
+                              <span className="font-medium">{key.name}</span>
+                              {key.description && (
+                                <span className="block text-xs text-gray-500 mt-0.5">{key.description}</span>
+                              )}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
                 {selectedApi.subtitle && (
                   <p className="text-sm text-gray-600 mb-3">{selectedApi.subtitle}</p>
@@ -445,6 +536,7 @@ export default function DocsPage() {
                   <code className="block bg-gray-900 text-green-400 p-3 rounded-sm text-sm font-mono overflow-x-auto">
                     {shortenUrl(fullEndpointUrl, isMobile)}
                   </code>
+                  {session && (
                   <button
                     onClick={handleCopyEndpoint}
                     className="absolute top-2 right-2 bg-gray-800 border-gray-600 hover:bg-gray-700 text-gray-300 px-2 py-1 rounded-sm text-xs transition-colors flex items-center"
@@ -461,6 +553,7 @@ export default function DocsPage() {
                       </>
                     )}
                   </button>
+                  )}
                 </div>
               </div>
 
@@ -535,6 +628,30 @@ export default function DocsPage() {
                     </div>
                                           <div className="border border-gray-200 rounded-sm overflow-hidden h-64 sm:h-80">
                       <div className="bg-white h-full flex flex-col">
+                        {/* Header with .json label and copy button - matching usage examples style */}
+                        <div className="flex border-b border-gray-200 bg-blue-50/50 rounded-sm">
+                          <div className="flex-1 px-2 py-2 text-xs font-medium text-gray-500 bg-gray-50 shadow-sm">
+                            JSON
+                          </div>
+                          <button
+                            onClick={async () => {
+                              if (sampleResponse) {
+                                const jsonString = JSON.stringify(sampleResponse, null, 2);
+                                await copyToClipboard(jsonString);
+                                setCopiedResponse(true);
+                                setTimeout(() => setCopiedResponse(false), 2000);
+                              }
+                            }}
+                            className="px-3 py-2 text-xs transition-all duration-200 border-l border-gray-200 bg-gray-50/50 text-gray-500 hover:text-gray-700 hover:bg-gray-50"
+                            title="Copy response"
+                          >
+                            {copiedResponse ? (
+                              <CheckIcon className="h-3 w-3" />
+                            ) : (
+                              <DocumentDuplicateIcon className="h-3 w-3" />
+                            )}
+                          </button>
+                        </div>
                         <div className="flex-1 overflow-hidden">
                           {sampleResponse ? (
                             (() => {
