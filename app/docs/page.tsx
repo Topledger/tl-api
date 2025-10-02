@@ -451,74 +451,78 @@ export default function DocsPage() {
               {/* API Header */}
               <div className="mb-6">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-3 mb-3">
-                  <div className="flex items-center gap-2">
-                  <h1 className="text-lg sm:text-md font-semibold text-gray-900">{selectedApi.title}</h1>
-                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-sm text-xs font-medium bg-green-100 text-green-800 w-fit">
-                    {selectedApi.method}
-                  </span>
-                  </div>
-                  {!session ? (
-                    <button
-                      onClick={() => {
-                        // Store the current URL to redirect back after login
-                        const currentUrl = window.location.pathname + window.location.search;
-                        sessionStorage.setItem('redirectAfterLogin', currentUrl);
-                        // Redirect to login with a callback to keys page
-                        router.push('/auth/signin?callbackUrl=/keys');
-                      }}
-                      className="px-4 py-2 text-sm sm:border sm:bg-white sm:border-gray-200 font-medium text-gray-600 hover:text-white hover:bg-gray-900 transition-colors duration-200"
-                    >
-                      Get API Key →
-                    </button>
-                  ) : (
-                    <div className="w-[200px] relative dropdown-container">
-                      <div className="flex bg-white border border-gray-200 rounded-sm transition-shadow duration-200 overflow-hidden">
-                        {/* Left section - Key label */}
-                        <div className="bg-gradient-to-r from-gray-50 to-gray-100 border-r border-gray-200 px-3 py-2 flex items-center">
-                          <span className="text-xs font-normal text-gray-500 tracking-wider">KEY</span>
-                        </div>
-                        {/* Right section - Dropdown area */}
-                        <button
-                          type="button"
-                          className="flex-1 py-2 px-3 text-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-inset flex items-center justify-between group"
-                          onClick={() => setShowApiKeyDropdown(!showApiKeyDropdown)}
-                        >
-                          <span className={`truncate ${!selectedApiKey ? 'text-gray-400' : ''}`}>
-                            {selectedApiKey 
-                              ? Array.isArray(apiKeys) && apiKeys.find(key => key.id === selectedApiKey)?.name 
-                              : 'Select API key'
-                            }
-                          </span>
-                          <ChevronDownIcon className={`h-4 w-4 text-gray-400 ml-2 flex-shrink-0 transition-transform duration-200 ${showApiKeyDropdown ? 'rotate-180' : ''} group-hover:text-gray-600`} />
-                        </button>
-                      </div>
-                      
-                      {showApiKeyDropdown && (
-                        <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-sm shadow-md border border-gray-200 py-1 focus:outline-none z-50 max-h-60 overflow-auto">
-                          {Array.isArray(apiKeys) && apiKeys.map((key) => (
-                            <button
-                              key={key.id}
-                              type="button"
-                              className="block w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors duration-150"
-                              onClick={() => {
-                                setSelectedApiKey(key.id);
-                                setShowApiKeyDropdown(false);
-                              }}
-                            >
-                              <span className="font-medium">{key.name}</span>
-                              {key.description && (
-                                <span className="block text-xs text-gray-500 mt-0.5">{key.description}</span>
-                              )}
-                            </button>
-                          ))}
-                        </div>
-                      )}
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-2">
+                      <h1 className="text-lg sm:text-md font-semibold text-gray-900">{selectedApi.title}</h1>
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-sm text-xs font-medium bg-green-100 text-green-800 w-fit">
+                        {selectedApi.method}
+                      </span>
                     </div>
-                  )}
+                    {selectedApi.subtitle && (
+                      <p className="text-sm text-gray-600">{selectedApi.subtitle}</p>
+                    )}
+                  </div>
+                  <div className="flex-shrink-0">
+                    {!session ? (
+                      <button
+                        onClick={() => {
+                          // Store the current URL to redirect back after login
+                          const currentUrl = window.location.pathname + window.location.search;
+                          sessionStorage.setItem('redirectAfterLogin', currentUrl);
+                          // Redirect to login with a callback to keys page
+                          router.push('/auth/signin?callbackUrl=/keys');
+                        }}
+                        className="px-4 py-2 text-sm sm:border sm:bg-white sm:border-gray-200 font-medium text-gray-600 hover:text-white hover:bg-gray-900 transition-colors duration-200"
+                      >
+                        Get API Key →
+                      </button>
+                    ) : (
+                      <div className="w-[200px] relative dropdown-container">
+                        <div className="flex bg-white border border-gray-200 rounded-sm transition-shadow duration-200 overflow-hidden">
+                          {/* Left section - Key label */}
+                          <div className="bg-gradient-to-r from-gray-50 to-gray-100 border-r border-gray-200 px-3 py-2 flex items-center">
+                            <span className="text-xs font-normal text-gray-500 tracking-wider">KEY</span>
+                          </div>
+                          {/* Right section - Dropdown area */}
+                          <button
+                            type="button"
+                            className="flex-1 py-2 px-3 text-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-inset flex items-center justify-between group"
+                            onClick={() => setShowApiKeyDropdown(!showApiKeyDropdown)}
+                          >
+                            <span className={`truncate ${!selectedApiKey ? 'text-gray-400' : ''}`}>
+                              {selectedApiKey 
+                                ? Array.isArray(apiKeys) && apiKeys.find(key => key.id === selectedApiKey)?.name 
+                                : 'Select API key'
+                              }
+                            </span>
+                            <ChevronDownIcon className={`h-4 w-4 text-gray-400 ml-2 flex-shrink-0 transition-transform duration-200 ${showApiKeyDropdown ? 'rotate-180' : ''} group-hover:text-gray-600`} />
+                          </button>
+                        </div>
+                        
+                        {showApiKeyDropdown && (
+                          <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-sm shadow-md border border-gray-200 py-1 focus:outline-none z-50 max-h-60 overflow-auto">
+                            {Array.isArray(apiKeys) && apiKeys.map((key) => (
+                              <button
+                                key={key.id}
+                                type="button"
+                                className="block w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors duration-150"
+                                onClick={() => {
+                                  setSelectedApiKey(key.id);
+                                  setShowApiKeyDropdown(false);
+                                }}
+                              >
+                                <span className="font-medium">{key.name}</span>
+                                {key.description && (
+                                  <span className="block text-xs text-gray-500 mt-0.5">{key.description}</span>
+                                )}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </div>
-                {selectedApi.subtitle && (
-                  <p className="text-sm text-gray-600 mb-3">{selectedApi.subtitle}</p>
-                )}
               </div>
 
               {/* API Description */}
