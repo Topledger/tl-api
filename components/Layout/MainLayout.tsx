@@ -6,6 +6,7 @@ import { useRouter, usePathname } from 'next/navigation';
 import Sidebar from './Sidebar';
 import Header from './Header';
 import Footer from './Footer';
+import { Tab } from '@/components/UI/Tabs';
 
 export interface BreadcrumbItem {
   label: string;
@@ -27,6 +28,10 @@ interface MainLayoutProps {
   onToggleCategory?: (category: string) => void;
   onToggleSubcategory?: (subcategory: string) => void;
   onToggleProject?: (project: string) => void;
+  // Tabs props for dashboard
+  tabs?: Tab[];
+  activeTab?: string;
+  onTabChange?: (tabId: string) => void;
 }
 
 export default function MainLayout({ 
@@ -42,7 +47,10 @@ export default function MainLayout({
   onApiSelect,
   onToggleCategory,
   onToggleSubcategory,
-  onToggleProject
+  onToggleProject,
+  tabs,
+  activeTab,
+  onTabChange
 }: MainLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { data: session, status } = useSession();
@@ -113,6 +121,9 @@ export default function MainLayout({
           breadcrumbs={breadcrumbs}
           onMenuClick={() => setSidebarOpen(true)}
           menuItems={getContextualMenuItems()}
+          tabs={tabs}
+          activeTab={activeTab}
+          onTabChange={onTabChange}
         />
         
         <main className="flex-1 bg-gray-50 p-6">

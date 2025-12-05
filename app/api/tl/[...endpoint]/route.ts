@@ -30,21 +30,64 @@ interface ApiData {
   apis: ApiItem[];
 }
 
-// Load APIs data with S3 support
+// Load APIs data with S3 and database support
 async function getApisData(): Promise<ApiData> {
+  const allApis: ApiItem[] = [];
+  
+  // Load from S3
   if (isS3Configured()) {
     try {
       console.log('🔄 Loading API data from S3 for wrapper...');
-      return await getApiDataFromS3();
+      const s3Data = await getApiDataFromS3();
+      allApis.push(...s3Data.apis);
     } catch (error) {
       console.error('❌ Failed to load from S3, falling back to local file:', error);
     }
   }
   
-  console.log('📁 Loading API data from local file for wrapper...');
-  const apisPath = path.join(process.cwd(), 'public', 'apis_list.json');
-  const fileData = fs.readFileSync(apisPath, 'utf8');
-  return JSON.parse(fileData);
+  // If S3 failed, try local file
+  if (allApis.length === 0) {
+    try {
+      console.log('📁 Loading API data from local file for wrapper...');
+      const apisPath = path.join(process.cwd(), 'public', 'apis_list.json');
+      const fileData = fs.readFileSync(apisPath, 'utf8');
+      const localData = JSON.parse(fileData);
+      allApis.push(...localData.apis);
+    } catch (error) {
+      console.error('❌ Failed to load from local file:', error);
+    }
+  }
+  
+  // Load from database (for trading APIs and other DB-stored APIs)
+  try {
+    const dbApis = await prisma.apiEndpoint.findMany({
+      where: { isActive: true },
+    });
+    
+    // Convert database APIs to ApiItem format
+    const dbApiItems: ApiItem[] = dbApis.map(api => ({
+      endpoint: api.originalUrl,
+      apiKey: '', // Database APIs don't have a stored API key - will be handled differently
+      title: api.title,
+      subtitle: api.subtitle || '',
+      page: '',
+      pageName: api.pageName,
+      menuId: api.menuName,
+      menuName: api.menuName,
+      description: api.subtitle || undefined,
+    }));
+    
+    allApis.push(...dbApiItems);
+    console.log(`✅ Loaded ${dbApiItems.length} APIs from database for wrapper`);
+  } catch (error) {
+    console.error('❌ Failed to load from database:', error);
+  }
+  
+  return {
+    totalApis: allApis.length,
+    extractedAt: new Date().toISOString(),
+    apis: allApis,
+  };
 }
 
 // Validate user API key with database lookup
@@ -284,11 +327,51 @@ async function handleRequest(
     // Create the wrapped endpoint path that users see
     const wrappedEndpointPath = `/api/tl${endpointPath}`;
     
-    // Find the matching API by path
-    const matchingApi = apisData.apis.find(api => {
-      const apiPath = new URL(api.endpoint).pathname;
-      return apiPath === endpointPath || apiPath.endsWith(endpointPath);
-    });
+    // Find the matching API by path (handle path parameters like {mint})
+    let matchingApi: ApiItem | null = null;
+    let pathParams: Record<string, string> = {};
+    
+    for (const api of apisData.apis) {
+      try {
+        const apiUrl = new URL(api.endpoint);
+        const apiPath = apiUrl.pathname;
+        
+        // Check for exact match
+        if (apiPath === endpointPath) {
+          matchingApi = api;
+          break;
+        }
+        
+        // Check for path parameter match (e.g., /api/top-traders/{mint} matches /api/top-traders/ABC123)
+        const apiPathParts = apiPath.split('/').filter(p => p);
+        const endpointPathParts = endpointPath.split('/').filter(p => p);
+        
+        if (apiPathParts.length === endpointPathParts.length) {
+          let matches = true;
+          const params: Record<string, string> = {};
+          
+          for (let i = 0; i < apiPathParts.length; i++) {
+            if (apiPathParts[i].startsWith('{') && apiPathParts[i].endsWith('}')) {
+              // This is a parameter placeholder
+              const paramName = apiPathParts[i].slice(1, -1);
+              params[paramName] = endpointPathParts[i];
+            } else if (apiPathParts[i] !== endpointPathParts[i]) {
+              matches = false;
+              break;
+            }
+          }
+          
+          if (matches) {
+            matchingApi = api;
+            pathParams = params;
+            break;
+          }
+        }
+      } catch (error) {
+        // Skip invalid URLs
+        continue;
+      }
+    }
 
     if (!matchingApi) {
       return NextResponse.json(
@@ -300,10 +383,21 @@ async function handleRequest(
     // Remove api_key from searchParams to avoid passing it to the target API
     searchParams.delete('api_key');
     
-    // Build target URL with original API key
-    const targetUrl = new URL(matchingApi.endpoint);
+    // Build target URL with path parameters replaced
+    let targetUrlString = matchingApi.endpoint;
+    
+    // Replace path parameters in the URL
+    Object.entries(pathParams).forEach(([key, value]) => {
+      targetUrlString = targetUrlString.replace(`{${key}}`, value);
+    });
+    
+    const targetUrl = new URL(targetUrlString);
     targetUrl.search = searchParams.toString();
-    targetUrl.searchParams.set('api_key', matchingApi.apiKey);
+    
+    // Only add API key if it exists (database APIs might not have one)
+    if (matchingApi.apiKey) {
+      targetUrl.searchParams.set('api_key', matchingApi.apiKey);
+    }
 
     // Prepare request options
     const requestOptions: RequestInit = {

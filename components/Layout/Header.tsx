@@ -1,10 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useSession, signOut } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { ChevronDownIcon, ChevronRightIcon, Bars3Icon } from '@heroicons/react/24/outline';
 import { useAppStore } from '@/lib/store';
+import Tabs, { Tab } from '@/components/UI/Tabs';
 
 interface BreadcrumbItem {
   label: string;
@@ -31,13 +32,36 @@ interface HeaderProps {
   customButton?: CustomButton;
   hideDefaultButton?: boolean;
   menuItems?: MenuItem[];
+  tabs?: Tab[];
+  activeTab?: string;
+  onTabChange?: (tabId: string) => void;
 }
 
-export default function Header({ title, breadcrumbs, onMenuClick, showLogo, customButton, hideDefaultButton, menuItems }: HeaderProps) {
+export default function Header({ title, breadcrumbs, onMenuClick, showLogo, customButton, hideDefaultButton, menuItems, tabs, activeTab, onTabChange }: HeaderProps) {
   const [showDropdown, setShowDropdown] = useState(false);
+  const [activeTabPosition, setActiveTabPosition] = useState({ left: 0, width: 0 });
+  const tabsContainerRef = useRef<HTMLDivElement>(null);
   const { data: session } = useSession();
   const router = useRouter();
   const { user } = useAppStore();
+
+  // Calculate active tab position for border indicator
+  useEffect(() => {
+    if (tabs && activeTab && tabsContainerRef.current) {
+      const activeButton = tabsContainerRef.current.querySelector(`[data-tab-id="${activeTab}"]`) as HTMLElement;
+      if (activeButton) {
+        const headerElement = tabsContainerRef.current.closest('header');
+        if (headerElement) {
+          const headerRect = headerElement.getBoundingClientRect();
+          const buttonRect = activeButton.getBoundingClientRect();
+          setActiveTabPosition({
+            left: buttonRect.left - headerRect.left,
+            width: buttonRect.width,
+          });
+        }
+      }
+    }
+  }, [tabs, activeTab]);
 
   const handleSignOut = async () => {
     await signOut({ callbackUrl: '/' });
@@ -54,7 +78,7 @@ export default function Header({ title, breadcrumbs, onMenuClick, showLogo, cust
   const displayUser = session?.user || user;
 
   return (
-    <header className="bg-gray-50 border-b border-gray-200">
+    <header className="bg-gray-50 border-b border-gray-200 relative">
       <div className="px-4 md:px-6 lg:px-6 py-4">
         <div className="flex items-center justify-between">
           {/* Mobile menu button */}
@@ -84,7 +108,7 @@ export default function Header({ title, breadcrumbs, onMenuClick, showLogo, cust
                 </button>
               </div>
             )}
-            <div className="flex-1">
+            <div className="flex-1 relative">
               {breadcrumbs && breadcrumbs.length > 0 ? (
                 <nav className="flex" aria-label="Breadcrumb">
                   <ol className="flex items-center space-x-2">
@@ -110,7 +134,14 @@ export default function Header({ title, breadcrumbs, onMenuClick, showLogo, cust
                   </ol>
                 </nav>
               ) : (
-                showLogo ? null : <h1 className="text-lg font-semibold text-gray-600">{title}</h1>
+                // Show tabs if provided, otherwise show title
+                tabs && tabs.length > 0 && activeTab && onTabChange ? (
+                  <div ref={tabsContainerRef} className="relative">
+                    <Tabs tabs={tabs} activeTab={activeTab} onTabChange={onTabChange} />
+                  </div>
+                ) : (
+                  showLogo ? null : <h1 className="text-lg font-semibold text-gray-600">{title}</h1>
+                )
               )}
             </div>
           </div>
@@ -223,6 +254,17 @@ export default function Header({ title, breadcrumbs, onMenuClick, showLogo, cust
             )}
           </div>
         </div>
+        {/* Active tab border indicator on header bottom border */}
+        {tabs && tabs.length > 0 && activeTab && activeTabPosition.width > 0 && (
+          <div 
+            className="absolute h-[2px] bg-gray-900 transition-all duration-200 z-10"
+            style={{
+              left: `${activeTabPosition.left}px`,
+              width: `${activeTabPosition.width}px`,
+              bottom: '-1px',
+            }}
+          />
+        )}
       </div>
     </header>
   );

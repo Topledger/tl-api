@@ -169,8 +169,11 @@ const ApiDetailsModal: React.FC<ApiDetailsModalProps> = ({
     : '';
 
   // Preview URL for demo purposes (doesn't consume credits)
+  // For trading APIs (without /api/tl prefix), use docs-preview endpoint
   const previewEndpointUrl = api && selectedApiKey 
-    ? `${typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3001'}${api.wrapperUrl.replace('/api/tl/', '/api/tl-preview/')}?api_key=${selectedApiKey.key}`
+    ? api.wrapperUrl.startsWith('/api/tl/')
+      ? `${typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3001'}${api.wrapperUrl.replace('/api/tl/', '/api/tl-preview/')}?api_key=${selectedApiKey.key}`
+      : `${typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3001'}${api.wrapperUrl.replace('/api/', '/api/docs-preview/')}?api_key=${selectedApiKey.key}`
     : '';
 
   const curlExample = fullEndpointUrl 

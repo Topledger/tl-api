@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getApiDataFromS3 } from '@/lib/s3';
+import { getApiDataFromS3, isS3Configured } from '@/lib/s3';
+import { prisma } from '@/lib/db';
 
 interface ApiData {
   apis: Array<{
@@ -10,20 +11,56 @@ interface ApiData {
   }>;
 }
 
-// Load API data from S3
+// Load API data from S3 and database
 async function getApisData(): Promise<ApiData> {
-  try {
-    return await getApiDataFromS3();
-  } catch (error) {
-    console.error('Error loading API data from S3:', error);
-    
-    // Fallback to local file
-    const fs = await import('fs');
-    const path = await import('path');
-    const filePath = path.join(process.cwd(), 'data', 'api-endpoints.json');
-    const fileData = fs.readFileSync(filePath, 'utf8');
-    return JSON.parse(fileData);
+  const allApis: Array<{ id: string; endpoint: string; apiKey: string; [key: string]: any }> = [];
+  
+  // Load from S3
+  if (isS3Configured()) {
+    try {
+      const s3Data = await getApiDataFromS3();
+      allApis.push(...s3Data.apis);
+    } catch (error) {
+      console.error('Error loading API data from S3:', error);
+    }
   }
+  
+  // Fallback to local file if S3 failed
+  if (allApis.length === 0) {
+    try {
+      const fs = await import('fs');
+      const path = await import('path');
+      const filePath = path.join(process.cwd(), 'data', 'api-endpoints.json');
+      const fileData = fs.readFileSync(filePath, 'utf8');
+      const localData = JSON.parse(fileData);
+      allApis.push(...localData.apis);
+    } catch (error) {
+      console.error('Error loading from local file:', error);
+    }
+  }
+  
+  // Load from database
+  try {
+    const dbApis = await prisma.apiEndpoint.findMany({
+      where: { isActive: true },
+    });
+    
+    const dbApiItems = dbApis.map(api => ({
+      id: api.id,
+      endpoint: api.originalUrl,
+      apiKey: '', // Database APIs don't have stored API key
+      title: api.title,
+      subtitle: api.subtitle,
+      menuName: api.menuName,
+      pageName: api.pageName,
+    }));
+    
+    allApis.push(...dbApiItems);
+  } catch (error) {
+    console.error('Error loading from database:', error);
+  }
+  
+  return { apis: allApis };
 }
 
 export async function GET(
@@ -40,11 +77,51 @@ export async function GET(
     // Build the endpoint path from the dynamic route
     const endpointPath = '/' + resolvedParams.endpoint.join('/');
     
-    // Find the matching API by path
-    const matchingApi = apisData.apis.find(api => {
-      const apiPath = new URL(api.endpoint).pathname;
-      return apiPath === endpointPath || apiPath.endsWith(endpointPath);
-    });
+    // Find the matching API by path (handle path parameters like {mint})
+    let matchingApi: { id: string; endpoint: string; apiKey: string; [key: string]: any } | null = null;
+    let pathParams: Record<string, string> = {};
+    
+    for (const api of apisData.apis) {
+      try {
+        const apiUrl = new URL(api.endpoint);
+        const apiPath = apiUrl.pathname;
+        
+        // Check for exact match
+        if (apiPath === endpointPath) {
+          matchingApi = api;
+          break;
+        }
+        
+        // Check for path parameter match (e.g., /api/top-traders/{mint} matches /api/top-traders/ABC123)
+        const apiPathParts = apiPath.split('/').filter(p => p);
+        const endpointPathParts = endpointPath.split('/').filter(p => p);
+        
+        if (apiPathParts.length === endpointPathParts.length) {
+          let matches = true;
+          const params: Record<string, string> = {};
+          
+          for (let i = 0; i < apiPathParts.length; i++) {
+            if (apiPathParts[i].startsWith('{') && apiPathParts[i].endsWith('}')) {
+              // This is a parameter placeholder
+              const paramName = apiPathParts[i].slice(1, -1);
+              params[paramName] = endpointPathParts[i];
+            } else if (apiPathParts[i] !== endpointPathParts[i]) {
+              matches = false;
+              break;
+            }
+          }
+          
+          if (matches) {
+            matchingApi = api;
+            pathParams = params;
+            break;
+          }
+        }
+      } catch (error) {
+        // Skip invalid URLs
+        continue;
+      }
+    }
 
     if (!matchingApi) {
       return NextResponse.json(
@@ -57,10 +134,21 @@ export async function GET(
     const { searchParams } = new URL(request.url);
     searchParams.delete('api_key'); // Remove any api_key to prevent exposure
     
-    // Build target URL with the stored API key (hidden from client)
-    const targetUrl = new URL(matchingApi.endpoint);
+    // Build target URL with path parameters replaced
+    let targetUrlString = matchingApi.endpoint;
+    
+    // Replace path parameters in the URL
+    Object.entries(pathParams).forEach(([key, value]) => {
+      targetUrlString = targetUrlString.replace(`{${key}}`, value);
+    });
+    
+    const targetUrl = new URL(targetUrlString);
     targetUrl.search = searchParams.toString();
-    targetUrl.searchParams.set('api_key', matchingApi.apiKey);
+    
+    // Only add API key if it exists (database APIs might not have one)
+    if (matchingApi.apiKey) {
+      targetUrl.searchParams.set('api_key', matchingApi.apiKey);
+    }
 
     // Prepare request options
     const requestOptions: RequestInit = {

@@ -35,6 +35,7 @@ interface ApiData {
 }
 
 export default function ExplorePage() {
+  const [activeTab, setActiveTab] = useState<'research' | 'trading'>('research');
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedMenuName, setSelectedMenuName] = useState('');
   const [selectedPageName, setSelectedPageName] = useState('');
@@ -159,14 +160,26 @@ export default function ExplorePage() {
     alert(`API: ${api.title}\nCategory: ${api.menuName} > ${api.pageName}\nWrapper URL: ${api.wrapperUrl}\nOriginal URL: ${api.originalUrl}`);
   };
 
+  // Get APIs based on active tab
+  // Trading APIs are filtered by menuName === 'Trading' from the database
+  // Research APIs are all other APIs
+  const availableApis = activeTab === 'trading' 
+    ? (apiData?.apis || []).filter(api => api.menuName === 'Trading')
+    : (apiData?.apis || []).filter(api => api.menuName !== 'Trading');
+
   // Filter APIs based on search term and selected categories
-  const filteredApis = apiData?.apis ? apiData.apis.filter(api => {
+  const filteredApis = availableApis.filter(api => {
     const matchesSearch = !searchTerm || (
       api.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       api.subtitle.toLowerCase().includes(searchTerm.toLowerCase()) ||
       api.menuName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       api.pageName.toLowerCase().includes(searchTerm.toLowerCase())
     );
+    
+    // For trading APIs, only apply search filter
+    if (activeTab === 'trading') {
+      return matchesSearch;
+    }
     
     const matchesMenuName = !selectedMenuName || api.menuName === selectedMenuName;
     
@@ -195,7 +208,7 @@ export default function ExplorePage() {
     // For other categories, use regular two-level filtering
     const matchesPageName = !selectedPageName || api.pageName === selectedPageName;
     return matchesSearch && matchesMenuName && matchesPageName;
-  }) : [];
+  });
 
   // Pagination logic
   const totalPages = Math.ceil(filteredApis.length / itemsPerPage);
@@ -260,9 +273,30 @@ export default function ExplorePage() {
     ...(Array.isArray(apiKeys) ? apiKeys.map(key => ({ value: key.id, label: key.name })) : [])
   ];
 
+  // Define tabs for the header
+  const tabs = [
+    { id: 'research', label: 'Research Tool APIs' },
+    { id: 'trading', label: 'Trading APIs' },
+  ];
+
+  const handleTabChange = (tabId: string) => {
+    setActiveTab(tabId as 'research' | 'trading');
+    setSelectedMenuName('');
+    setSelectedPageName('');
+    setSelectedProject('');
+    setSelectedApiType('');
+    setSearchTerm('');
+    setCurrentPage(1);
+  };
+
   return (
-    <MainLayout title="Top Ledger APIs">
+    <MainLayout 
+      tabs={tabs}
+      activeTab={activeTab}
+      onTabChange={handleTabChange}
+    >
       <div className="space-y-6">
+
         {/* Search and Filters */}
         <div className="bg-white rounded-sm justify border border-gray-200 py-1 pl-2 pr-6">
           <div className="space-y-4">
@@ -287,63 +321,67 @@ export default function ExplorePage() {
               
               {/* Dropdowns Container - shifts right on desktop */}
               <div className="flex flex-wrap gap-4 lg:flex-nowrap lg:ml-auto lg:flex-shrink-0">
-                <Dropdown
-                  options={categoryOptions}
-                  value={selectedMenuName}
-                  onChange={(value) => {
-                    setSelectedMenuName(value);
-                    setSelectedPageName(''); // Reset page filter when menu changes
-                    setSelectedProject(''); // Reset project filter
-                    setSelectedApiType(''); // Reset API type filter
-                    setCurrentPage(1); // Reset to first page
-                  }}
-                  placeholder="All Categories"
-                  className="w-full sm:w-[200px] lg:w-[200px]"
-                />
-                
-                {/* Show different dropdowns based on selected category */}
-                {selectedMenuName === 'Projects' ? (
+                {activeTab === 'research' && (
                   <>
-                    {/* Projects Dropdown */}
                     <Dropdown
-                      options={projectOptions}
-                      value={selectedProject}
+                      options={categoryOptions}
+                      value={selectedMenuName}
                       onChange={(value) => {
-                        setSelectedProject(value);
-                        setSelectedApiType(''); // Reset API type when project changes
+                        setSelectedMenuName(value);
+                        setSelectedPageName(''); // Reset page filter when menu changes
+                        setSelectedProject(''); // Reset project filter
+                        setSelectedApiType(''); // Reset API type filter
                         setCurrentPage(1); // Reset to first page
                       }}
-                      placeholder="All Projects"
+                      placeholder="All Categories"
                       className="w-full sm:w-[200px] lg:w-[200px]"
                     />
                     
-                    {/* API Type Dropdown - only show when project is selected */}
-                    {selectedProject && (
+                    {/* Show different dropdowns based on selected category */}
+                    {selectedMenuName === 'Projects' ? (
+                      <>
+                        {/* Projects Dropdown */}
+                        <Dropdown
+                          options={projectOptions}
+                          value={selectedProject}
+                          onChange={(value) => {
+                            setSelectedProject(value);
+                            setSelectedApiType(''); // Reset API type when project changes
+                            setCurrentPage(1); // Reset to first page
+                          }}
+                          placeholder="All Projects"
+                          className="w-full sm:w-[200px] lg:w-[200px]"
+                        />
+                        
+                        {/* API Type Dropdown - only show when project is selected */}
+                        {selectedProject && (
+                          <Dropdown
+                            options={apiTypeOptions}
+                            value={selectedApiType}
+                            onChange={(value) => {
+                              setSelectedApiType(value);
+                              setCurrentPage(1); // Reset to first page
+                            }}
+                            placeholder="All API Types"
+                            className="w-full sm:w-[200px] lg:w-[200px]"
+                          />
+                        )}
+                      </>
+                    ) : (
+                      /* Regular subcategory dropdown for non-Projects categories */
                       <Dropdown
-                        options={apiTypeOptions}
-                        value={selectedApiType}
+                        options={pageOptions}
+                        value={selectedPageName}
                         onChange={(value) => {
-                          setSelectedApiType(value);
+                          setSelectedPageName(value);
                           setCurrentPage(1); // Reset to first page
                         }}
-                        placeholder="All API Types"
+                        placeholder={!selectedMenuName ? "Select Category First" : "All Subcategories"}
+                        disabled={!selectedMenuName}
                         className="w-full sm:w-[200px] lg:w-[200px]"
                       />
                     )}
                   </>
-                ) : (
-                  /* Regular subcategory dropdown for non-Projects categories */
-                  <Dropdown
-                    options={pageOptions}
-                    value={selectedPageName}
-                    onChange={(value) => {
-                      setSelectedPageName(value);
-                      setCurrentPage(1); // Reset to first page
-                    }}
-                    placeholder={!selectedMenuName ? "Select Category First" : "All Subcategories"}
-                    disabled={!selectedMenuName}
-                    className="w-full sm:w-[200px] lg:w-[200px]"
-                  />
                 )}
 
                 <div className="w-full sm:w-[200px] lg:w-[200px] relative dropdown-container">

@@ -464,7 +464,7 @@ export default function DocsPage() {
                   </div>
                   <div className="flex-shrink-0">
                     {!session ? (
-                      <button
+                                <button
                         onClick={() => {
                           // Store the current URL to redirect back after login
                           const currentUrl = window.location.pathname + window.location.search;
@@ -473,7 +473,7 @@ export default function DocsPage() {
                           router.push('/auth/signin?callbackUrl=/keys');
                         }}
                         className="px-4 py-2 text-sm sm:border sm:bg-white sm:border-gray-200 font-medium text-gray-600 hover:text-white hover:bg-gray-900 transition-colors duration-200"
-                      >
+                                >
                         Get API Key →
                       </button>
                     ) : (
@@ -484,7 +484,7 @@ export default function DocsPage() {
                             <span className="text-xs font-normal text-gray-500 tracking-wider">KEY</span>
                           </div>
                           {/* Right section - Dropdown area */}
-                          <button
+                                          <button
                             type="button"
                             className="flex-1 py-2 px-3 text-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-inset flex items-center justify-between group"
                             onClick={() => setShowApiKeyDropdown(!showApiKeyDropdown)}
@@ -496,13 +496,13 @@ export default function DocsPage() {
                               }
                             </span>
                             <ChevronDownIcon className={`h-4 w-4 text-gray-400 ml-2 flex-shrink-0 transition-transform duration-200 ${showApiKeyDropdown ? 'rotate-180' : ''} group-hover:text-gray-600`} />
-                          </button>
+                                          </button>
                         </div>
                         
                         {showApiKeyDropdown && (
                           <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-sm shadow-md border border-gray-200 py-1 focus:outline-none z-50 max-h-60 overflow-auto">
                             {Array.isArray(apiKeys) && apiKeys.map((key) => (
-                              <button
+                                                <button
                                 key={key.id}
                                 type="button"
                                 className="block w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors duration-150"
@@ -515,9 +515,9 @@ export default function DocsPage() {
                                 {key.description && (
                                   <span className="block text-xs text-gray-500 mt-0.5">{key.description}</span>
                                 )}
-                              </button>
-                            ))}
-                          </div>
+                                      </button>
+                                    ))}
+                                  </div>
                         )}
                       </div>
                     )}

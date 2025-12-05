@@ -146,10 +146,29 @@ export default function Sidebar({
                 <div className="space-y-0.5">
                   {groupedApis && Object.entries(groupedApis as any).map(([categoryName, subcategories]: [string, any]) => {
                     // Calculate total API count for the category
-                    const totalCount = categoryName === 'Projects' 
-                      ? Object.values(subcategories as any).reduce((total: number, projects: any) => 
-                          total + Object.values(projects as any).reduce((subTotal: number, apis: any) => subTotal + (apis as any[]).length, 0), 0)
-                      : Object.values(subcategories as any).reduce((total: number, apis: any) => total + (apis as any[]).length, 0);
+                    let totalCount = 0;
+                    if (subcategories && typeof subcategories === 'object') {
+                      try {
+                        if (categoryName === 'Projects') {
+                          totalCount = Object.values(subcategories as any).reduce((total: number, projects: any) => {
+                            if (!projects || typeof projects !== 'object') return total;
+                            return total + Object.values(projects as any).reduce((subTotal: number, apis: any) => {
+                              return subTotal + (Array.isArray(apis) ? apis.length : 0);
+                            }, 0);
+                          }, 0);
+                        } else {
+                          totalCount = Object.values(subcategories as any).reduce((total: number, apis: any) => {
+                            return total + (Array.isArray(apis) ? apis.length : 0);
+                          }, 0);
+                        }
+                      } catch (error) {
+                        console.error('Error calculating totalCount:', error);
+                        totalCount = 0;
+                      }
+                    }
+                    
+                    // Ensure totalCount is always a valid number
+                    totalCount = isNaN(totalCount) || !isFinite(totalCount) ? 0 : totalCount;
 
                     return (
                       <div key={categoryName}>
@@ -173,7 +192,18 @@ export default function Sidebar({
                             {categoryName === 'Projects' ? (
                               // Three-level structure for Projects: Projects > Project Name > API Type > APIs
                               Object.entries(subcategories as any).map(([projectName, apiTypes]: [string, any]) => {
-                                const projectCount = Object.values(apiTypes as any).reduce((total: number, apis: any) => total + (apis as any[]).length, 0);
+                                let projectCount = 0;
+                                if (apiTypes && typeof apiTypes === 'object') {
+                                  try {
+                                    projectCount = Object.values(apiTypes as any).reduce((total: number, apis: any) => {
+                                      return total + (Array.isArray(apis) ? apis.length : 0);
+                                    }, 0);
+                                  } catch (error) {
+                                    console.error('Error calculating projectCount:', error);
+                                    projectCount = 0;
+                                  }
+                                }
+                                projectCount = isNaN(projectCount) || !isFinite(projectCount) ? 0 : projectCount;
                                 
                                 return (
                                   <div key={projectName}>
@@ -207,7 +237,7 @@ export default function Sidebar({
                                                   <ChevronRightIcon className="h-3 w-3 mr-1.5 text-gray-400" />
                                                 )}
                                                 {apiTypeName}
-                                                <span className="ml-auto text-xs text-gray-400 font-normal">{(apis as any[]).length}</span>
+                                                <span className="ml-auto text-xs text-gray-400 font-normal">{Array.isArray(apis) ? apis.length : 0}</span>
                                               </button>
                                               
                                               {expandedSubcategories?.has(apiTypeKey) && (
@@ -250,8 +280,8 @@ export default function Sidebar({
                                       ) : (
                                         <ChevronRightIcon className="h-3 w-3 mr-1.5 text-gray-400" />
                                       )}
-                                      {subcategoryName}
-                                      <span className="ml-auto text-xs text-gray-400 font-normal">{(apis as any[]).length}</span>
+                                                {subcategoryName}
+                                                <span className="ml-auto text-xs text-gray-400 font-normal">{Array.isArray(apis) ? apis.length : 0}</span>
                                     </button>
                                     
                                     {expandedSubcategories?.has(subcategoryKey) && (
