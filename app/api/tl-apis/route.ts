@@ -157,6 +157,124 @@ export async function GET() {
           { name: 'current_sol_balance', type: 'number', description: 'Current SOL balance', example: '21.608882322' },
           { name: 'transferred_amount', type: 'number', description: 'Amount of tokens transferred', example: '0.0' },
         ],
+        '/api/helium/queries/14744/results': [
+          { name: 'height', type: 'integer', description: 'Block height on Helium L1', example: '12345' },
+          { name: 'time', type: 'string', description: 'Human readable block time', example: '2022-08-04 12:00:00' },
+          { name: 'timestamp', type: 'string', description: 'Block timestamp', example: '2022-08-04T12:00:00Z' },
+          { name: 'prev_hash', type: 'string', description: 'Previous block hash', example: '0xabc123...' },
+          { name: 'block_hash', type: 'string', description: 'Current block hash', example: '0x123abc...' },
+          { name: 'transaction_count', type: 'integer', description: 'Number of transactions in block', example: '15' },
+          { name: 'hbbft_round', type: 'integer', description: 'HBBFT consensus round', example: '100' },
+          { name: 'election_epoch', type: 'integer', description: 'Election epoch number', example: '5' },
+          { name: 'epoch_start', type: 'string', description: 'Epoch start indicator', example: 'true/false' },
+        ],
+        '/api/helium/queries/14745/results': [
+          { name: 'transaction_hash', type: 'string', description: 'Hash of the transaction', example: '0x456def...' },
+          { name: 'block_number', type: 'integer', description: 'Block number containing transaction', example: '11431' },
+          { name: 'from_address', type: 'string', description: 'Sender address', example: '0x789ghi...' },
+          { name: 'to_address', type: 'string', description: 'Recipient address', example: '0xabcjkl...' },
+          { name: 'amount', type: 'number', description: 'Transaction amount', example: '1.5' },
+          { name: 'gas_used', type: 'integer', description: 'Gas used by transaction', example: '21000' },
+          { name: 'timestamp', type: 'string', description: 'Transaction timestamp', example: '2022-08-04T12:00:00Z' },
+        ],
+        // Helium Oracle APIs (generic columns - will be updated with real data)
+        '/api/helium/oracle/iot/entropy': [
+          { name: 'block_date', type: 'date', description: 'Block date for the data', example: '2026-01-01' },
+          { name: 'table_name', type: 'string', description: 'Source table name', example: 'helium_oracle_iot_entropy' },
+          { name: 'record_count', type: 'integer', description: 'Number of records', example: '5432' },
+          { name: 'data_size_bytes', type: 'integer', description: 'Data size in bytes', example: '524288' },
+          { name: 'last_updated', type: 'timestamp', description: 'Last update timestamp', example: '2026-01-01T12:00:00Z' },
+        ],
+        '/api/helium/oracle/iot/gatewayrewardshare': [
+          { name: 'block_date', type: 'date', description: 'Block date for the data', example: '2026-01-01' },
+          { name: 'gateway_address', type: 'string', description: 'Gateway address', example: '0x123abc...' },
+          { name: 'reward_amount', type: 'number', description: 'Reward amount', example: '1.5' },
+          { name: 'share_percentage', type: 'number', description: 'Reward share percentage', example: '0.15' },
+        ],
+        '/api/helium/oracle/iot/beaconingreport': [
+          { name: 'block_date', type: 'date', description: 'Block date for the data', example: '2026-01-01' },
+          { name: 'beacon_id', type: 'string', description: 'Beacon identifier', example: 'beacon_123' },
+          { name: 'signal_strength', type: 'number', description: 'Signal strength', example: '-85.5' },
+          { name: 'location_accuracy', type: 'number', description: 'Location accuracy in meters', example: '10.5' },
+        ],
+        '/api/helium/oracle/iot/invalidbeaconreport': [
+          { name: 'block_date', type: 'date', description: 'Block date for the data', example: '2026-01-01' },
+          { name: 'beacon_id', type: 'string', description: 'Invalid beacon identifier', example: 'beacon_456' },
+          { name: 'reason', type: 'string', description: 'Reason for invalidity', example: 'Low signal strength' },
+          { name: 'error_code', type: 'integer', description: 'Error code', example: '404' },
+        ],
+        '/api/helium/oracle/iot/invalidwitnessreport': [
+          { name: 'block_date', type: 'date', description: 'Block date for the data', example: '2026-01-01' },
+          { name: 'witness_id', type: 'string', description: 'Invalid witness identifier', example: 'witness_789' },
+          { name: 'reason', type: 'string', description: 'Reason for invalidity', example: 'Distance too far' },
+          { name: 'distance', type: 'number', description: 'Distance in km', example: '15.2' },
+        ],
+        '/api/helium/oracle/iot/poc': [
+          { name: 'block_date', type: 'date', description: 'Block date for the data', example: '2026-01-01' },
+          { name: 'hotspot_address', type: 'string', description: 'Hotspot address', example: '0xabc123...' },
+          { name: 'poc_score', type: 'number', description: 'Proof of Coverage score', example: '0.95' },
+          { name: 'challenge_count', type: 'integer', description: 'Number of challenges', example: '24' },
+        ],
+        '/api/helium/oracle/iot/rewardshare': [
+          { name: 'block_date', type: 'date', description: 'Block date for the data', example: '2026-01-01' },
+          { name: 'participant_address', type: 'string', description: 'Participant address', example: '0xdef456...' },
+          { name: 'reward_amount', type: 'number', description: 'IoT reward amount', example: '2.5' },
+          { name: 'activity_type', type: 'string', description: 'Type of IoT activity', example: 'data_transfer' },
+        ],
+        '/api/helium/oracle/iot/witnessingreport': [
+          { name: 'block_date', type: 'date', description: 'Block date for the data', example: '2026-01-01' },
+          { name: 'witness_address', type: 'string', description: 'Witness hotspot address', example: '0x789def...' },
+          { name: 'signal_strength', type: 'number', description: 'Witness signal strength', example: '-75.2' },
+          { name: 'frequency', type: 'number', description: 'Radio frequency', example: '915.0' },
+        ],
+        '/api/helium/oracle/iot/packetreport': [
+          { name: 'block_date', type: 'date', description: 'Block date for the data', example: '2026-01-01' },
+          { name: 'packet_id', type: 'string', description: 'Packet identifier', example: 'pkt_123456' },
+          { name: 'payload_size', type: 'integer', description: 'Payload size in bytes', example: '128' },
+          { name: 'gateway_address', type: 'string', description: 'Gateway that received packet', example: '0x123ghi...' },
+        ],
+        '/api/helium/oracle/iot/rewardmanifest': [
+          { name: 'block_date', type: 'date', description: 'Block date for the data', example: '2026-01-01' },
+          { name: 'manifest_id', type: 'string', description: 'Reward manifest identifier', example: 'manifest_iot_123' },
+          { name: 'total_rewards', type: 'number', description: 'Total IoT rewards', example: '1000.5' },
+          { name: 'participant_count', type: 'integer', description: 'Number of participants', example: '150' },
+        ],
+        '/api/helium/oracle/mobile/cellspeedtest': [
+          { name: 'block_date', type: 'date', description: 'Block date for the data', example: '2026-01-01' },
+          { name: 'cell_id', type: 'string', description: 'Cell tower identifier', example: 'cell_mobile_123' },
+          { name: 'download_speed', type: 'number', description: 'Download speed in Mbps', example: '45.2' },
+          { name: 'upload_speed', type: 'number', description: 'Upload speed in Mbps', example: '12.8' },
+        ],
+        '/api/helium/oracle/mobile/datatransfer': [
+          { name: 'block_date', type: 'date', description: 'Block date for the data', example: '2026-01-01' },
+          { name: 'session_id', type: 'string', description: 'Data transfer session ID', example: 'session_456' },
+          { name: 'bytes_transferred', type: 'integer', description: 'Bytes transferred', example: '1048576' },
+          { name: 'duration_seconds', type: 'integer', description: 'Session duration in seconds', example: '3600' },
+        ],
+        '/api/helium/oracle/mobile/rewardshare': [
+          { name: 'block_date', type: 'date', description: 'Block date for the data', example: '2026-01-01' },
+          { name: 'participant_address', type: 'string', description: 'Mobile participant address', example: '0xabc789...' },
+          { name: 'reward_amount', type: 'number', description: 'Mobile reward amount', example: '3.2' },
+          { name: 'service_type', type: 'string', description: 'Type of mobile service', example: '5G_coverage' },
+        ],
+        '/api/helium/oracle/mobile/rewardmanifest': [
+          { name: 'block_date', type: 'date', description: 'Block date for the data', example: '2026-01-01' },
+          { name: 'manifest_id', type: 'string', description: 'Mobile reward manifest ID', example: 'manifest_mobile_456' },
+          { name: 'total_rewards', type: 'number', description: 'Total mobile rewards', example: '2500.75' },
+          { name: 'coverage_area', type: 'string', description: 'Coverage area', example: 'urban_zone_1' },
+        ],
+        '/api/helium/oracle/mobile/speedtestavg': [
+          { name: 'block_date', type: 'date', description: 'Block date for the data', example: '2026-01-01' },
+          { name: 'region', type: 'string', description: 'Geographic region', example: 'north_america' },
+          { name: 'avg_download_speed', type: 'number', description: 'Average download speed', example: '42.5' },
+          { name: 'avg_upload_speed', type: 'number', description: 'Average upload speed', example: '15.3' },
+        ],
+        '/api/helium/oracle/mobile/heartbeat': [
+          { name: 'block_date', type: 'date', description: 'Block date for the data', example: '2026-01-01' },
+          { name: 'hotspot_address', type: 'string', description: 'Mobile hotspot address', example: '0xdef123...' },
+          { name: 'heartbeat_count', type: 'integer', description: 'Number of heartbeats', example: '144' },
+          { name: 'uptime_percentage', type: 'number', description: 'Uptime percentage', example: '98.5' },
+        ],
       };
 
       // Transform database APIs to wrapper format
@@ -208,6 +326,8 @@ export async function GET() {
         uniqueApis.set(api.path, api);
       }
     });
+
+    // Helium APIs are now loaded from database along with other APIs
 
     const finalApis = Array.from(uniqueApis.values());
 

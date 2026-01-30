@@ -35,7 +35,7 @@ interface ApiData {
 }
 
 export default function ExplorePage() {
-  const [activeTab, setActiveTab] = useState<'research' | 'trading'>('research');
+  const [activeTab, setActiveTab] = useState<'research' | 'trading' | 'helium'>('research');
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedMenuName, setSelectedMenuName] = useState('');
   const [selectedPageName, setSelectedPageName] = useState('');
@@ -162,10 +162,13 @@ export default function ExplorePage() {
 
   // Get APIs based on active tab
   // Trading APIs are filtered by menuName === 'Trading' from the database
+  // Helium APIs are filtered by menuName === 'Helium' from the database
   // Research APIs are all other APIs
   const availableApis = activeTab === 'trading' 
     ? (apiData?.apis || []).filter(api => api.menuName === 'Trading')
-    : (apiData?.apis || []).filter(api => api.menuName !== 'Trading');
+    : activeTab === 'helium'
+    ? (apiData?.apis || []).filter(api => api.menuName === 'Helium')
+    : (apiData?.apis || []).filter(api => api.menuName !== 'Trading' && api.menuName !== 'Helium');
 
   // Filter APIs based on search term and selected categories
   const filteredApis = availableApis.filter(api => {
@@ -176,8 +179,8 @@ export default function ExplorePage() {
       api.pageName.toLowerCase().includes(searchTerm.toLowerCase())
     );
     
-    // For trading APIs, only apply search filter
-    if (activeTab === 'trading') {
+    // For trading and helium APIs, only apply search filter
+    if (activeTab === 'trading' || activeTab === 'helium') {
       return matchesSearch;
     }
     
@@ -277,10 +280,11 @@ export default function ExplorePage() {
   const tabs = [
     { id: 'research', label: 'Research Tool APIs' },
     { id: 'trading', label: 'Trading APIs' },
+    { id: 'helium', label: 'Helium APIs' },
   ];
 
   const handleTabChange = (tabId: string) => {
-    setActiveTab(tabId as 'research' | 'trading');
+    setActiveTab(tabId as 'research' | 'trading' | 'helium');
     setSelectedMenuName('');
     setSelectedPageName('');
     setSelectedProject('');

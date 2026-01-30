@@ -26,12 +26,21 @@ export interface ApiKey {
 
 export interface ApiEndpoint {
   id: string;
-  name: string;
+  title: string;
+  subtitle: string;
   path: string;
-  description: string;
+  wrapperUrl: string;
+  originalUrl?: string;
+  menuName: string;
+  pageName?: string;
   method: 'GET' | 'POST' | 'PUT' | 'DELETE';
-  requestSchema?: any;
-  responseSchema?: any;
+  responseColumns?: Array<{
+    name: string;
+    type: string;
+    description?: string;
+    example?: string;
+  }>;
+  description?: string;
   dailyRequests?: { date: string; requests: number }[];
 }
 

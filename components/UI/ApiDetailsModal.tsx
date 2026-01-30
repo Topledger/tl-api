@@ -177,11 +177,121 @@ const ApiDetailsModal: React.FC<ApiDetailsModalProps> = ({
     : '';
 
   const curlExample = fullEndpointUrl 
-    ? `curl -X GET "${fullEndpointUrl}"`
+    ? api?.method === 'POST' && api?.menuName === 'Helium'
+      ? api.path === '/api/helium/queries/14744/results'
+        ? `curl -X POST "${fullEndpointUrl}" \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "parameters": {
+      "start_date": "2022-08-04",
+      "end_date": "2022-08-08"
+    }
+  }'`
+        : api.path === '/api/helium/queries/14745/results'
+        ? `curl -X POST "${fullEndpointUrl}" \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "parameters": {
+      "start_block": "11431",
+      "end_block": "11435"
+    }
+  }'`
+        : api.path.startsWith('/api/helium/oracle/')
+        ? `curl -X POST "${fullEndpointUrl}" \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "parameters": {
+      "block_date": "2026-01-01"
+    }
+  }'`
+        : `curl -X POST "${fullEndpointUrl}" \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "parameters": {
+      "start_date": "2022-08-04",
+      "end_date": "2022-08-08"
+    }
+  }'`
+      : `curl -X GET "${fullEndpointUrl}"`
     : '';
 
   const fetchExample = fullEndpointUrl 
-    ? `fetch('${fullEndpointUrl}')
+    ? api?.method === 'POST' && api?.menuName === 'Helium'
+      ? api.path === '/api/helium/queries/14744/results'
+        ? `fetch('${fullEndpointUrl}', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+  },
+  body: JSON.stringify({
+    parameters: {
+      start_date: '2022-08-04',
+      end_date: '2022-08-08'
+    }
+  })
+})
+  .then(response => response.json())
+  .then(data => {
+    // Handle your data here
+    return data;
+  })
+  .catch(error => console.error('Error:', error));`
+        : api.path === '/api/helium/queries/14745/results'
+        ? `fetch('${fullEndpointUrl}', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+  },
+  body: JSON.stringify({
+    parameters: {
+      start_block: '11431',
+      end_block: '11435'
+    }
+  })
+})
+  .then(response => response.json())
+  .then(data => {
+    // Handle your data here
+    return data;
+  })
+  .catch(error => console.error('Error:', error));`
+        : api.path.startsWith('/api/helium/oracle/')
+        ? `fetch('${fullEndpointUrl}', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+  },
+  body: JSON.stringify({
+    parameters: {
+      block_date: '2026-01-01'
+    }
+  })
+})
+  .then(response => response.json())
+  .then(data => {
+    // Handle your data here
+    return data;
+  })
+  .catch(error => console.error('Error:', error));`
+        : `fetch('${fullEndpointUrl}', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+  },
+  body: JSON.stringify({
+    parameters: {
+      start_date: '2022-08-04',
+      end_date: '2022-08-08'
+    }
+  })
+})
+  .then(response => response.json())
+  .then(data => {
+    // Handle your data here
+    return data;
+  })
+  .catch(error => console.error('Error:', error));`
+      : `fetch('${fullEndpointUrl}')
   .then(response => response.json())
   .then(data => {
     // Handle your data here
@@ -204,7 +314,32 @@ const ApiDetailsModal: React.FC<ApiDetailsModalProps> = ({
     setLoadingResponse(true);
     try {
       // Use preview endpoint to avoid consuming credits
-      const response = await fetch(previewEndpointUrl);
+      const isHeliumAPI = api?.method === 'POST' && api?.menuName === 'Helium';
+      
+      const response = isHeliumAPI 
+        ? await fetch(previewEndpointUrl, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              parameters: api?.path === '/api/helium/queries/14745/results'
+                ? {
+                    start_block: '11431',
+                    end_block: '11435'
+                  }
+                : api?.path.startsWith('/api/helium/oracle/')
+                ? {
+                    block_date: '2026-01-01'
+                  }
+                : {
+                    start_date: '2022-08-04',
+                    end_date: '2022-08-08'
+                  }
+            })
+          })
+        : await fetch(previewEndpointUrl);
+      
       const data = await response.json();
       
       // Limit the response size for display

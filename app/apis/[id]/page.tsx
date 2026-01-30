@@ -12,7 +12,7 @@ import { copyToClipboard, formatDate } from '@/lib/utils';
 
 export default function ApiDetailsPage() {
   const params = useParams();
-  const apiId = params.id as string;
+  const apiId = params?.id as string;
   const [apiUsageData, setApiUsageData] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [mounted, setMounted] = useState(false);
@@ -118,7 +118,7 @@ export default function ApiDetailsPage() {
 
   const breadcrumbs = [
     { label: 'Top Ledger APIs', href: '/' },
-    { label: apiEndpoint.name }
+    { label: apiEndpoint.title }
   ];
 
   return (
@@ -127,9 +127,9 @@ export default function ApiDetailsPage() {
         {/* API Header */}
         <div className="flex items-start justify-between">
           <div className="flex-1">
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">{apiEndpoint.name}</h1>
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">{apiEndpoint.title}</h1>
             <p className="text-gray-600 leading-relaxed mb-4">
-              {apiEndpoint.description}
+              {apiEndpoint.subtitle}
             </p>
             
             {/* API Method and Path */}
@@ -231,28 +231,57 @@ export default function ApiDetailsPage() {
           </div>
         </div>
 
-        {/* API Schema Information */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Request Schema */}
+        {/* Response Columns Information */}
+        {apiEndpoint.responseColumns && apiEndpoint.responseColumns.length > 0 && (
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Request Schema</h3>
-            <div className="bg-gray-50 rounded-lg p-4">
-              <pre className="text-sm text-gray-800 overflow-x-auto">
-                <code>{JSON.stringify(apiEndpoint.requestSchema, null, 2)}</code>
-              </pre>
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Response Columns</h3>
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Column Name
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Type
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Description
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Example
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {apiEndpoint.responseColumns.map((column: any, index: number) => (
+                    <tr key={index}>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-900">
+                        {column.name}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                        <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                          column.type === 'string' ? 'bg-blue-100 text-blue-800' :
+                          column.type === 'number' || column.type === 'integer' ? 'bg-green-100 text-green-800' :
+                          column.type === 'boolean' ? 'bg-purple-100 text-purple-800' :
+                          'bg-gray-100 text-gray-800'
+                        }`}>
+                          {column.type}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-sm text-gray-600">
+                        {column.description || '-'}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-500">
+                        {column.example || '-'}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           </div>
-
-          {/* Response Schema */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Response Schema</h3>
-            <div className="bg-gray-50 rounded-lg p-4">
-              <pre className="text-sm text-gray-800 overflow-x-auto">
-                <code>{JSON.stringify(apiEndpoint.responseSchema, null, 2)}</code>
-              </pre>
-            </div>
-          </div>
-        </div>
+        )}
 
         {/* API Information */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
@@ -279,8 +308,17 @@ export default function ApiDetailsPage() {
           
           <div className="mt-6">
             <h4 className="text-sm font-medium text-gray-500 mb-2">Description</h4>
-            <p className="text-gray-700">{apiEndpoint.description}</p>
+            <p className="text-gray-700">{apiEndpoint.subtitle}</p>
           </div>
+          
+          {apiEndpoint.menuName && (
+            <div className="mt-4">
+              <h4 className="text-sm font-medium text-gray-500 mb-2">Category</h4>
+              <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-800">
+                {apiEndpoint.menuName}
+              </span>
+            </div>
+          )}
         </div>
       </div>
     </MainLayout>
