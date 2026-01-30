@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { ChevronDownIcon, ChevronRightIcon, Bars3Icon } from '@heroicons/react/24/outline';
 import { useAppStore } from '@/lib/store';
 import Tabs, { Tab } from '@/components/UI/Tabs';
+import WalletConnect from '@/components/UI/WalletConnect';
 
 interface BreadcrumbItem {
   label: string;
@@ -172,6 +173,9 @@ export default function Header({ title, breadcrumbs, onMenuClick, showLogo, cust
                 ))}
               </nav>
             )}
+
+            {/* Wallet Connect Button for x402 payments */}
+            <WalletConnect className="hidden sm:block" />
 
             {session ? (
               <>
