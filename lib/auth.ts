@@ -220,20 +220,46 @@ export const authOptions: NextAuthOptions = {
       return true;
     },
     async redirect({ url, baseUrl }) {
-      // If coming from docs page with callbackUrl=/keys, redirect to /keys
+      console.log(`🔄 NextAuth redirect: url=${url}, baseUrl=${baseUrl}`);
+      
+      // Handle specific callbackUrl cases
       if (url.includes('callbackUrl=/keys')) {
         return `${baseUrl}/keys`;
       }
+      if (url.includes('callbackUrl=/helium')) {
+        return `${baseUrl}/helium`;
+      }
+      if (url.includes('callbackUrl=/trading')) {
+        return `${baseUrl}/trading`;
+      }
+      if (url.includes('callbackUrl=/research')) {
+        return `${baseUrl}/research`;
+      }
+      if (url.includes('callbackUrl=/usage')) {
+        return `${baseUrl}/usage`;
+      }
+      if (url.includes('callbackUrl=/settings')) {
+        return `${baseUrl}/settings`;
+      }
+      
       // If url is a relative path, make it absolute
       if (url.startsWith('/')) {
+        // Check if it's one of our valid routes
+        const validRoutes = ['/research', '/trading', '/helium', '/keys', '/usage', '/settings'];
+        if (validRoutes.includes(url)) {
+          return `${baseUrl}${url}`;
+        }
         return `${baseUrl}${url}`;
       }
+      
       // If url is on the same origin, allow it
       if (url.startsWith(baseUrl)) {
         return url;
       }
-      // Default redirect to dashboard
-      return `${baseUrl}/dashboard`;
+      
+      // Default redirect to research (instead of dashboard)
+      console.log(`🏠 Default redirect to /research`);
+      return `${baseUrl}/research`;
     },
     async session({ session, token }) {
       // Use cached data from JWT token instead of fresh DB queries

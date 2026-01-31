@@ -72,7 +72,7 @@ export default function Header({ title, breadcrumbs, onMenuClick, showLogo, cust
   };
 
   const handleLogoClick = () => {
-    router.push(session ? '/dashboard' : '/');
+    router.push(session ? '/research' : '/');
   };
 
   const displayUser = session?.user || user;

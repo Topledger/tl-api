@@ -17,7 +17,7 @@ import { cn } from '@/lib/utils';
 import { useSession } from 'next-auth/react';
 
 const navigation = [
-  { name: 'Explore APIs', href: '/dashboard', icon: HomeIcon },
+  { name: 'Explore APIs', href: '/research', icon: HomeIcon },
   { name: 'API Keys', href: '/keys', icon: KeyIcon },
   { name: 'Usage', href: '/usage', icon: ChartBarIcon },
   //{ name: 'Documentation', href: '/docs', icon: DocumentTextIcon },
@@ -93,7 +93,7 @@ export default function Sidebar({
   const router = useRouter();
   const { data: session } = useSession();
   const handleLogoClick = () => {
-    session ? router.push('/dashboard') : router.push('/');
+    session ? router.push('/research') : router.push('/');
   };
 
   return (

@@ -17,8 +17,8 @@ export default function HomePage() {
     setIsLoading(false);
 
     if (session) {
-      // User is authenticated, redirect to dashboard
-      router.push('/dashboard');
+      // User is authenticated, redirect to research (default tab)
+      router.push('/research');
     }
     // If no session, show landing page (don't redirect)
   }, [session, status, router]);

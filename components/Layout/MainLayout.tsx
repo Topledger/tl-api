@@ -61,7 +61,10 @@ export default function MainLayout({
     // Redirect to sign in if not authenticated, except for docs page
     if (status === 'loading') return; // Still loading
     if (!session && pathname !== '/docs') {
-      router.push('/auth/signin');
+      // Include the current path as callbackUrl so user returns here after login
+      const callbackUrl = encodeURIComponent(pathname || '/research');
+      console.log(`🔐 Redirecting to sign-in with callbackUrl: ${pathname || '/research'}`);
+      router.push(`/auth/signin?callbackUrl=${callbackUrl}`);
       return;
     }
   }, [session, status, router, pathname]);
@@ -69,14 +72,14 @@ export default function MainLayout({
   // Determine contextual menu items based on current page
   const getContextualMenuItems = () => {
     if (pathname === '/docs') {
-      // If not authenticated, show sign in option, otherwise show dashboard
-      return session ? [{ label: 'Dashboard', href: '/dashboard' }] : [{ label: 'Home', href: '/' }];
-    } else if (pathname === '/dashboard') {
+      // If not authenticated, show sign in option, otherwise show APIs
+      return session ? [{ label: 'APIs', href: '/research' }] : [{ label: 'Home', href: '/' }];
+    } else if (pathname === '/research' || pathname === '/trading' || pathname === '/helium' || pathname === '/dashboard') {
       return [{ label: 'Documentation', href: '/docs' }];
     } else {
       // For other pages, show both options
       return [
-        { label: 'Dashboard', href: '/dashboard' },
+        { label: 'APIs', href: '/research' },
         { label: 'Documentation', href: '/docs' }
       ];
     }

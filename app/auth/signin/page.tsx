@@ -14,18 +14,20 @@ function SignInContent() {
   const [discordLoading, setDiscordLoading] = useState(false);
   
   // Get callbackUrl from URL parameters
-  const callbackUrl = searchParams?.get('callbackUrl') || '/dashboard';
+  const callbackUrl = searchParams?.get('callbackUrl') || '/research';
 
   useEffect(() => {
     // Check if user is already signed in
     const checkSession = async () => {
       const session = await getSession();
       if (session) {
-        router.push('/');
+        // If user is already signed in, redirect to their intended destination
+        console.log(`👤 User already signed in, redirecting to: ${callbackUrl}`);
+        router.push(callbackUrl);
       }
     };
     checkSession();
-  }, [router]);
+  }, [router, callbackUrl]);
 
 
   const handleViewDocs = () => {
