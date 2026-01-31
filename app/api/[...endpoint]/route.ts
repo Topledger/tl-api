@@ -27,6 +27,14 @@ async function handleRequest(
     // Get user API key from query params or headers
     const { searchParams } = new URL(request.url);
     const userApiKey = searchParams.get('api_key') || request.headers.get('x-api-key');
+    
+    // Extract pagination parameters (for future use)
+    const offset = searchParams.get('offset') ? parseInt(searchParams.get('offset')!) : undefined;
+    const limit = searchParams.get('limit') ? parseInt(searchParams.get('limit')!) : undefined;
+    
+    if (offset) {
+      console.log(`📄 [TRADING-API] Pagination requested: offset=${offset}, limit=${limit || 'default'}`);
+    }
 
     if (!userApiKey) {
       return NextResponse.json(

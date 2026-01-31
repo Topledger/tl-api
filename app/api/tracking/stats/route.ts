@@ -2,6 +2,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import { getApiUsageStats, prisma } from '@/lib/db';
+import { 
+  parsePaginationParams, 
+  validatePaginationParams, 
+  createPaginatedResponse 
+} from '@/lib/pagination';
 
 export async function GET(request: NextRequest) {
   try {

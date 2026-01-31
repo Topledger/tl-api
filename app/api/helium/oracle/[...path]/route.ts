@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma, checkUserCredits, deductUserCredits, logApiCall } from '@/lib/db';
+import { parsePaginationParams, createPaginatedResponse } from '@/lib/pagination';
 
 // Mapping from URL paths to table_ref values
 const pathToTableRef: Record<string, string> = {
@@ -48,6 +49,12 @@ export async function POST(
     // Extract and validate API key
     const { searchParams } = new URL(request.url);
     const apiKey = searchParams.get('api_key');
+    
+    // Parse pagination parameters
+    const { offset, limit } = parsePaginationParams(searchParams);
+    if (offset && offset > 1) {
+      console.log(`📄 Pagination requested: offset=${offset}, limit=${limit}`);
+    }
 
     if (!apiKey) {
       console.log('❌ No API key provided');
@@ -177,6 +184,81 @@ export async function POST(
     const responseData = await externalResponse.json();
     console.log(`✅ External API response received: ${JSON.stringify(responseData).length} characters`);
 
+    // Extract data for pagination
+    const allRows = responseData?.query_result?.data?.rows || [];
+    const totalRecords = allRows.length;
+    
+    console.log(`📊 Total records from external API: ${totalRecords}`);
+    console.log(`📄 Pagination: offset=${offset}, limit=${limit}`);
+
+    // Apply pagination to the rows
+    let paginatedRows = allRows;
+    let paginatedResponse;
+    
+    if (totalRecords <= 10000) {
+      // Small dataset - return all data
+      console.log(`📦 Small dataset (${totalRecords} records) - returning all data`);
+      paginatedResponse = {
+        ...responseData,
+        total_records: totalRecords,
+        returned_records: totalRecords,
+        is_complete: true,
+        message: "Complete dataset returned (≤ 10,000 rows)"
+      };
+    } else {
+      // Large dataset - apply pagination
+      console.log(`📦 Large dataset (${totalRecords} records) - applying pagination`);
+      
+      // Validate offset
+      const totalPages = Math.ceil(totalRecords / limit!);
+      if (offset! > totalPages) {
+        return NextResponse.json({
+          error: `Invalid offset. Maximum page is ${totalPages} for ${totalRecords} records`,
+          total_records: totalRecords,
+          total_pages: totalPages,
+          valid_range: `1-${totalPages}`
+        }, { status: 400 });
+      }
+      
+      // Calculate pagination
+      const skip = (offset! - 1) * limit!;
+      const take = limit!;
+      paginatedRows = allRows.slice(skip, skip + take);
+      
+      console.log(`🔄 Paginated: showing rows ${skip + 1}-${skip + paginatedRows.length} of ${totalRecords}`);
+      
+      // Create paginated response
+      const baseUrl = request.url.split('?')[0];
+      const paginationMeta = createPaginatedResponse(
+        paginatedRows,
+        totalRecords, 
+        offset!,
+        limit!,
+        baseUrl,
+        apiKey
+      );
+      
+      paginatedResponse = {
+        query_result: {
+          data: {
+            columns: responseData.query_result?.data?.columns || [],
+            rows: paginatedRows
+          },
+          retrieved_at: responseData.query_result?.retrieved_at
+        },
+        ...paginationMeta
+      };
+      
+      // Add performance warning for deep pagination
+      if (offset! > 100) {
+        paginatedResponse.warning = {
+          type: 'large_offset',
+          message: `Deep pagination (page ${offset}) may be slow for ${totalRecords.toLocaleString()} records`,
+          suggestion: 'Consider using date filters to reduce dataset size'
+        };
+      }
+    }
+
     // Deduct credit for successful API call
     await deductUserCredits(userId, 1);
     
@@ -191,7 +273,7 @@ export async function POST(
     
     console.log(`💳 Credit deducted successfully`);
 
-    return NextResponse.json(responseData);
+    return NextResponse.json(paginatedResponse);
 
   } catch (error) {
     console.error('💥 Helium Oracle API error:', error);

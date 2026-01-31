@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma, checkUserCredits, deductUserCredits, logApiCall } from '@/lib/db';
+import { parsePaginationParams } from '@/lib/pagination';
 
 export async function POST(
   request: NextRequest,

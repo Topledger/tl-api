@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getApiDataFromS3, isS3Configured } from '@/lib/s3';
 import { prisma } from '@/lib/db';
+import { parsePaginationParams } from '@/lib/pagination';
 
 interface ApiData {
   apis: Array<{
