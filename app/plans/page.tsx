@@ -10,10 +10,10 @@ const plans = [
   {
     name: 'Basic',
     price: 0,
-    credits: 5000,
+    credits: 1000,
     description: 'Ideal for testing',
     features: [
-      '5,000 Credits',
+      '1,000 Credits',
       '10 Requests/sec',
       '1 API key',
       'Ideal for testing'
@@ -326,7 +326,7 @@ export default function PlansPage() {
                 Is there a free trial available?
               </h3>
               <p className="text-gray-600 text-sm">
-                Yes! Our Basic plan includes 5,000 free credits every month, perfect for testing and small projects.
+                Yes! Our Basic plan includes 1,000 free credits every month, perfect for testing and small projects.
               </p>
             </div>
           </div>

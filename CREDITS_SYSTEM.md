@@ -1,7 +1,7 @@
 # Credits System Implementation
 
 ## Overview
-This system implements a credits-based usage model for API calls. Each user starts with 5000 credits by default, and 1 credit is deducted for every successful API call.
+This system implements a credits-based usage model for API calls. Each user starts with 1000 credits by default, and 1 credit is deducted for every successful API call.
 
 ## Database Schema
 The `User` model now includes a `credits` field:
@@ -12,7 +12,7 @@ model User {
   name        String
   picture     String?
   plan        String   @default("Basic")
-  credits     Int      @default(5000)  // New field
+  credits     Int      @default(1000)  // New field
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   // ... relations
@@ -30,7 +30,7 @@ model User {
 - Deduction happens only for successful API responses (2xx status codes)
 
 ### 3. New User Setup
-- New users automatically receive 5000 credits when their account is created
+- New users automatically receive 1000 credits when their account is created
 - This happens during the OAuth sign-in process
 
 ### 4. Database Functions
@@ -57,7 +57,7 @@ Status Code: 402 (Payment Required)
 ## Credit Management
 
 ### Update Existing Users
-Run the script to give existing users 5000 credits:
+Run the script to give existing users 1000 credits:
 ```bash
 npx ts-node scripts/update-existing-users-credits.ts
 ```
@@ -70,7 +70,7 @@ npx ts-node scripts/update-existing-users-credits.ts --all
 ### Manual Credit Management
 You can manually update user credits in the database:
 ```sql
-UPDATE users SET credits = 5000 WHERE email = 'user@example.com';
+UPDATE users SET credits = 1000 WHERE email = 'user@example.com';
 ```
 
 ## Error Handling

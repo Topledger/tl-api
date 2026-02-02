@@ -17,7 +17,7 @@ model User {
   name        String
   picture     String?
   plan        String   @default("Basic")
-  credits     Int      @default(30000)
+  credits     Int      @default(1000)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
