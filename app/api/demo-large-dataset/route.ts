@@ -41,8 +41,8 @@ export async function GET(request: NextRequest) {
     console.log(`📋 Dataset type: ${datasetType}`);
     
     // Parse pagination parameters
-    const { offset, limit } = parsePaginationParams(searchParams);
-    console.log(`📄 Pagination: offset=${offset}, limit=${limit}`);
+    const { offset } = parsePaginationParams(searchParams);
+    console.log(`📄 Pagination: offset=${offset}`);
     
     // Simulate different dataset sizes for testing
     let totalRecords: number;
@@ -68,7 +68,7 @@ export async function GET(request: NextRequest) {
     console.log(`📊 Simulated total records: ${totalRecords}`);
     
     // Validate pagination parameters
-    const validation = validatePaginationParams(offset!, totalRecords, limit!);
+    const validation = validatePaginationParams(offset!, totalRecords);
     if (!validation.isValid) {
       return NextResponse.json({
         error: validation.error,
@@ -80,8 +80,9 @@ export async function GET(request: NextRequest) {
     }
     
     // Generate mock data for the current page
-    const skip = (offset! - 1) * limit!;
-    const actualRecordsToReturn = Math.min(limit!, totalRecords - skip);
+    const recordsPerPage = 10000; // Fixed page size
+    const skip = (offset! - 1) * recordsPerPage;
+    const actualRecordsToReturn = Math.min(recordsPerPage, totalRecords - skip);
     
     mockData = Array.from({ length: actualRecordsToReturn }, (_, index) => {
       const recordIndex = skip + index + 1;
@@ -109,7 +110,6 @@ export async function GET(request: NextRequest) {
       mockData,
       totalRecords,
       offset!,
-      limit!,
       `/api/demo-large-dataset?dataset=${datasetType}`,
       apiKey
     );

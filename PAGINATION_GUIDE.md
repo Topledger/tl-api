@@ -22,8 +22,8 @@ GET /api/large-dataset?api_key=YOUR_KEY
 ?offset=3    # Rows 20,001-30,000
 ?offset=N    # Rows ((N-1)*10K + 1) to (N*10K)
 
-# Optional: Custom page size
-?offset=2&limit=5000    # Page 2 with 5K records instead of 10K
+# Page 2 (records 10,001-20,000)
+?offset=2
 ```
 
 ## Response Format
@@ -88,11 +88,11 @@ curl "/api/large-dataset?offset=285&api_key=YOUR_KEY" # Last page
 
 ### 3. Custom Page Sizes
 ```bash
-# Smaller pages (minimum 1,000)
-curl "/api/large-dataset?offset=1&limit=2000&api_key=YOUR_KEY"
+# Page 1 (first 10,000 records)
+curl "/api/large-dataset?offset=1&api_key=YOUR_KEY"
 
-# Larger pages (maximum 50,000)
-curl "/api/large-dataset?offset=1&limit=25000&api_key=YOUR_KEY"
+# Page 3 (records 20,001-30,000)
+curl "/api/large-dataset?offset=3&api_key=YOUR_KEY"
 ```
 
 ## Error Handling
@@ -205,4 +205,4 @@ Try these with your API key:
 - **Small dataset**: `/api/demo-large-dataset?dataset=small&api_key=YOUR_KEY`
 - **Large dataset**: `/api/demo-large-dataset?dataset=large&api_key=YOUR_KEY`
 - **Page 2**: `/api/demo-large-dataset?dataset=large&offset=2&api_key=YOUR_KEY`
-- **Custom limit**: `/api/demo-large-dataset?dataset=large&offset=1&limit=5000&api_key=YOUR_KEY`
+- **Page 2**: `/api/demo-large-dataset?dataset=large&offset=2&api_key=YOUR_KEY`

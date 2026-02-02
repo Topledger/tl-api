@@ -42,8 +42,8 @@
       "plan": "Basic",
       "credits": {
         "used": 0,
-        "remaining": 30000,
-        "total": 30000
+        "remaining": 1000,
+        "total": 1000
       },
       "billingCycle": {
         "start": "2025-09-03",

@@ -21,7 +21,7 @@ export async function GET() {
       create: {
         email: session.user.email,
         name: session.user.name || 'Unknown User',
-        credits: 30000,
+        credits: 1000,
         picture: session.user.image || null
       },
       include: { apiKeys: true }
@@ -111,7 +111,7 @@ export async function POST(request: Request) {
       create: {
         email: session.user.email,
         name: session.user.name || 'Unknown User',
-        credits: 30000,
+        credits: 1000,
         picture: session.user.image || null
       }
     });

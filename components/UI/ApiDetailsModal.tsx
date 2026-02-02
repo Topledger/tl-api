@@ -470,7 +470,6 @@ const ApiDetailsModal: React.FC<ApiDetailsModalProps> = ({
                     <span className="text-sm font-medium text-gray-700">Pagination:</span>
                     <div className="flex space-x-2">
                       <code className="text-xs bg-gray-100 px-2 py-1 rounded font-mono">offset</code>
-                      <code className="text-xs bg-gray-100 px-2 py-1 rounded font-mono">limit</code>
                     </div>
                   </div>
                   <span className="text-xs text-gray-600">For large datasets (&gt;10K rows)</span>
@@ -505,10 +504,6 @@ const ApiDetailsModal: React.FC<ApiDetailsModalProps> = ({
                         <code className="text-xs bg-gray-100 px-2 py-1 rounded font-mono">offset</code>
                         <span className="text-xs text-gray-500">Page number (1, 2, 3...)</span>
                       </div>
-                      <div className="flex justify-between items-center">
-                        <code className="text-xs bg-gray-100 px-2 py-1 rounded font-mono">limit</code>
-                        <span className="text-xs text-gray-500">Records per page (default: 10,000)</span>
-                      </div>
                     </div>
                   </div>
                   
@@ -522,10 +517,6 @@ const ApiDetailsModal: React.FC<ApiDetailsModalProps> = ({
                       <div className="text-gray-600">
                         <span className="text-blue-600"># Second page</span><br/>
                         <span className="text-gray-800">?offset=2&api_key=YOUR_KEY</span>
-                      </div>
-                      <div className="text-gray-600">
-                        <span className="text-blue-600"># Custom page size</span><br/>
-                        <span className="text-gray-800">?offset=1&limit=5000&api_key=YOUR_KEY</span>
                       </div>
                     </div>
                   </div>

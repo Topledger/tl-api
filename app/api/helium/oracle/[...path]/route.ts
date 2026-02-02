@@ -51,9 +51,9 @@ export async function POST(
     const apiKey = searchParams.get('api_key');
     
     // Parse pagination parameters
-    const { offset, limit } = parsePaginationParams(searchParams);
+    const { offset } = parsePaginationParams(searchParams);
     if (offset && offset > 1) {
-      console.log(`📄 Pagination requested: offset=${offset}, limit=${limit}`);
+      console.log(`📄 Pagination requested: offset=${offset}`);
     }
 
     if (!apiKey) {
@@ -189,7 +189,7 @@ export async function POST(
     const totalRecords = allRows.length;
     
     console.log(`📊 Total records from external API: ${totalRecords}`);
-    console.log(`📄 Pagination: offset=${offset}, limit=${limit}`);
+    console.log(`📄 Pagination: offset=${offset}`);
 
     // Apply pagination to the rows
     let paginatedRows = allRows;
@@ -210,7 +210,8 @@ export async function POST(
       console.log(`📦 Large dataset (${totalRecords} records) - applying pagination`);
       
       // Validate offset
-      const totalPages = Math.ceil(totalRecords / limit!);
+      const recordsPerPage = 10000; // Fixed page size
+      const totalPages = Math.ceil(totalRecords / recordsPerPage);
       if (offset! > totalPages) {
         return NextResponse.json({
           error: `Invalid offset. Maximum page is ${totalPages} for ${totalRecords} records`,
@@ -221,8 +222,8 @@ export async function POST(
       }
       
       // Calculate pagination
-      const skip = (offset! - 1) * limit!;
-      const take = limit!;
+      const skip = (offset! - 1) * recordsPerPage;
+      const take = recordsPerPage;
       paginatedRows = allRows.slice(skip, skip + take);
       
       console.log(`🔄 Paginated: showing rows ${skip + 1}-${skip + paginatedRows.length} of ${totalRecords}`);
@@ -233,7 +234,6 @@ export async function POST(
         paginatedRows,
         totalRecords, 
         offset!,
-        limit!,
         baseUrl,
         apiKey
       );

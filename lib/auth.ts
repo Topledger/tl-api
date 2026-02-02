@@ -109,7 +109,7 @@ async function getOrCreateUser(profile: { sub?: string; email: string; name: str
           name: profile.name,
           picture: profile.picture,
           plan: 'Basic',
-          credits: 30000 // Default credits
+          credits: 1000 // Default credits
         }
       });
 
@@ -177,8 +177,8 @@ function getOrCreateUserFromJSON(profile: { sub?: string; email: string; name: s
       plan: 'Basic',
       credits: {
         used: 0,
-        remaining: 30000, // Default credits
-        total: 30000,
+        remaining: 1000, // Default credits
+        total: 1000,
       },
       billingCycle: {
         start: new Date().toISOString().split('T')[0],

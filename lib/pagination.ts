@@ -1,6 +1,5 @@
 export interface PaginationParams {
   offset?: number;  // Page number (1, 2, 3...)
-  limit?: number;   // Records per page (optional, defaults to 10000)
 }
 
 export interface PaginationMetadata {
@@ -31,19 +30,17 @@ export interface PaginatedResponse<T> {
 
 export function parsePaginationParams(searchParams: URLSearchParams): PaginationParams {
   const offset = searchParams.get('offset') ? parseInt(searchParams.get('offset')!) : 1;
-  const limit = searchParams.get('limit') ? parseInt(searchParams.get('limit')!) : 10000;
   
   return {
     offset: Math.max(1, offset), // Ensure offset is at least 1
-    limit: Math.min(50000, Math.max(1000, limit)), // Limit between 1K and 50K
   };
 }
 
 export function validatePaginationParams(
   offset: number, 
-  totalRecords: number, 
-  recordsPerPage: number
+  totalRecords: number
 ): { isValid: boolean; error?: string; totalPages: number } {
+  const recordsPerPage = 10000; // Fixed page size
   const totalPages = Math.ceil(totalRecords / recordsPerPage);
   
   if (offset < 1) {
@@ -69,10 +66,11 @@ export function createPaginatedResponse<T>(
   data: T[],
   totalRecords: number,
   offset: number,
-  recordsPerPage: number,
   baseUrl: string,
   apiKey?: string
 ): PaginatedResponse<T> {
+  const recordsPerPage = 10000; // Fixed page size
+  
   // If dataset is small, return everything without pagination
   if (totalRecords <= recordsPerPage) {
     return {
