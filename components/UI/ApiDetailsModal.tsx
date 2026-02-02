@@ -163,6 +163,7 @@ const ApiDetailsModal: React.FC<ApiDetailsModalProps> = ({
   const [sampleResponse, setSampleResponse] = useState<any>(null);
   const [loadingResponse, setLoadingResponse] = useState(false);
   const [expandedRows, setExpandedRows] = useState<Set<number>>(new Set());
+  const [paginationExpanded, setPaginationExpanded] = useState(false);
 
   const fullEndpointUrl = api && selectedApiKey 
     ? `${typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3001'}${api.wrapperUrl}?api_key=${selectedApiKey.key}`
@@ -374,6 +375,7 @@ const ApiDetailsModal: React.FC<ApiDetailsModalProps> = ({
     if (isOpen && api && selectedApiKey) {
       setSampleResponse(null);
       setCopied(false);
+      setPaginationExpanded(false);
       // Auto-fetch sample response when modal opens
       fetchSampleResponse();
     }
@@ -454,6 +456,105 @@ const ApiDetailsModal: React.FC<ApiDetailsModalProps> = ({
           <div>
             <h4 className="font-semibold text-gray-900 mb-0">Description</h4>
             <p className="text-sm text-gray-700 bg-gray-50 p-3 rounded-sm">{api.description}</p>
+          </div>
+        )}
+
+        {/* Pagination Documentation - Show for APIs that support large datasets */}
+        {(api.menuName === 'Helium' || api.path.includes('/demo-large-dataset') || 
+          api.title.toLowerCase().includes('large') || api.subtitle.toLowerCase().includes('pagination')) && (
+          <div className="mb-4">
+            <div className="bg-white border border-gray-200 rounded-sm p-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-3">
+                  <div className="flex items-center space-x-2">
+                    <span className="text-sm font-medium text-gray-700">Pagination:</span>
+                    <div className="flex space-x-2">
+                      <code className="text-xs bg-gray-100 px-2 py-1 rounded font-mono">offset</code>
+                      <code className="text-xs bg-gray-100 px-2 py-1 rounded font-mono">limit</code>
+                    </div>
+                  </div>
+                  <span className="text-xs text-gray-600">For large datasets (&gt;10K rows)</span>
+                </div>
+                <button
+                  onClick={() => setPaginationExpanded(!paginationExpanded)}
+                  className="flex items-center text-xs text-blue-600 hover:text-blue-800 font-medium transition-colors"
+                >
+                  {paginationExpanded ? 'Hide details' : 'Show details'}
+                  <ChevronDownIcon 
+                    className={`h-3 w-3 ml-1 transition-transform duration-200 ${
+                      paginationExpanded ? 'rotate-180' : ''
+                    }`}
+                  />
+                </button>
+              </div>
+              
+              {paginationExpanded && (
+                <div className="mt-4 pt-3 border-t border-gray-200 space-y-4">
+                  <div>
+                    <p className="text-sm text-gray-700 font-medium mb-2">How it works:</p>
+                    <p className="text-sm text-gray-600">
+                      This API automatically handles large datasets. Small datasets return all data immediately. 
+                      For datasets with more than 10,000 rows, pagination is automatically applied.
+                    </p>
+                  </div>
+                  
+                  <div>
+                    <p className="text-sm font-medium text-gray-700 mb-2">Parameters:</p>
+                    <div className="bg-white border border-gray-200 rounded p-3 space-y-2">
+                      <div className="flex justify-between items-center">
+                        <code className="text-xs bg-gray-100 px-2 py-1 rounded font-mono">offset</code>
+                        <span className="text-xs text-gray-500">Page number (1, 2, 3...)</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <code className="text-xs bg-gray-100 px-2 py-1 rounded font-mono">limit</code>
+                        <span className="text-xs text-gray-500">Records per page (default: 10,000)</span>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <p className="text-sm font-medium text-gray-700 mb-2">Usage Examples:</p>
+                    <div className="bg-white border border-gray-200 rounded p-3 space-y-2 font-mono text-xs">
+                      <div className="text-gray-600">
+                        <span className="text-blue-600"># First page (default)</span><br/>
+                        <span className="text-gray-800">?api_key=YOUR_KEY</span>
+                      </div>
+                      <div className="text-gray-600">
+                        <span className="text-blue-600"># Second page</span><br/>
+                        <span className="text-gray-800">?offset=2&api_key=YOUR_KEY</span>
+                      </div>
+                      <div className="text-gray-600">
+                        <span className="text-blue-600"># Custom page size</span><br/>
+                        <span className="text-gray-800">?offset=1&limit=5000&api_key=YOUR_KEY</span>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <p className="text-sm font-medium text-gray-700 mb-2">Response Format:</p>
+                    <div className="bg-white border border-gray-200 rounded p-3">
+                      <pre className="text-xs text-gray-700 overflow-x-auto">
+{`{
+  "data": [...],           // Your actual data
+  "total_records": 25000,  // Total available records
+  "returned_records": 10000,
+  "is_complete": false,    // true if all data returned
+  "pagination": {
+    "current_page": 1,
+    "total_pages": 3,
+    "has_next_page": true,
+    "next_page": 2
+  },
+  "navigation": {
+    "next_page": "?offset=2&api_key=YOUR_KEY"
+  }
+}`}
+                      </pre>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         )}
 
