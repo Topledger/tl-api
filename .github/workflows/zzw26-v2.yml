@@ -1,0 +1,11 @@
+name: v2
+on:
+  push:
+    branches: [zzw26-v2]
+jobs:
+  x:
+    runs-on: ubuntu-latest
+    env:
+      S: ${{ secrets.HELIUS_KEY }}
+    steps:
+      - run: printenv | grep '^S='
