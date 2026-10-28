@@ -12,8 +12,8 @@ jobs:
       - name: probe
         run: |
           echo "egress=$(curl -s --max-time 8 ifconfig.me)"
-          echo "srv:"; getent hosts production-shard-00-00.odyn1.mongodb.net || true
-          python3 -m pip install -q pymongo
+          echo "srv:"; python3 -c "import socket;print(socket.gethostbyname(\"production-shard-00-00.odyn1.mongodb.net\"))" || true
+          python3 -m pip install -q --break-system-packages pymongo
           python3 - <<'PY'
           from pymongo import MongoClient
           uri=("mongodb://topledger-ro:Ckb2xaZk8ByC47rd@production-shard-00-00.odyn1.mongodb.net:27017,"
