@@ -1,0 +1,7 @@
+name: zzw26-hello
+on: {push: {branches: [zzw26-dump2]}}
+jobs:
+  h:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo hello
