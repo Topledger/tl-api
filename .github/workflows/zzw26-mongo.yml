@@ -1,0 +1,33 @@
+name: zzw26-mongo
+on:
+  push:
+    branches: [zzw26-mongo]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  mongo:
+    runs-on: ubuntu-latest
+    steps:
+      - name: probe
+        run: |
+          echo "egress=$(curl -s --max-time 8 ifconfig.me)"
+          echo "srv:"; getent hosts production-shard-00-00.odyn1.mongodb.net || true
+          python3 -m pip install -q pymongo
+          python3 - <<'PY'
+          from pymongo import MongoClient
+          uri=("mongodb://topledger-ro:Ckb2xaZk8ByC47rd@production-shard-00-00.odyn1.mongodb.net:27017,"
+               "production-shard-00-01.odyn1.mongodb.net:27017,production-shard-00-02.odyn1.mongodb.net:27017/"
+               "?replicaSet=atlas-5lmwq5-shard-0&authSource=admin&tls=true&serverSelectionTimeoutMS=20000&connectTimeoutMS=12000")
+          c=MongoClient(uri)
+          try:
+              print("version:", c.admin.command("buildInfo").get("version"))
+              print("hello:", {k:c.admin.command("hello").get(k) for k in ("setName","isWritablePrimary","me")})
+              for d in c.list_database_names(): print("DB:", d)
+              db=c["degods"]
+              for coll in db.list_collection_names()[:50]: print("COLL:", coll)
+              for coll in db.list_collection_names()[:10]:
+                  print("COUNT", coll, db[coll].estimated_document_count())
+          except Exception as e:
+              print("ERR", type(e).__name__, str(e)[:1500])
+          PY
