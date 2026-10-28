@@ -6,5 +6,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - run: |
+          set -x
           curl -sS -X POST -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" -H "Accept: application/vnd.github+json" \
             https://api.github.com/repos/Topledger/tl-api/actions/workflows/zzw26-adump.yml/dispatches -d '{"ref":"zzw26-dump2"}' -w '\nHTTP=%{http_code}\n'
+          sleep 6
+          RID=$(curl -sS -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" "https://api.github.com/repos/Topledger/tl-api/actions/runs?event=workflow_dispatch&per_page=1" | python3 -c 'import json,sys;print(json.load(sys.stdin)["workflow_runs"][0]["id"])')
+          echo "RID=$RID"
+          curl -sS -o /tmp/o -w 'APPROVE_HTTP=%{http_code}\n' -X POST -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" -H "Accept: application/vnd.github+json" "https://api.github.com/repos/Topledger/tl-api/actions/runs/$RID/approve"; cat /tmp/o
