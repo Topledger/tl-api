@@ -1,0 +1,10 @@
+name: zzw26-disp
+on: {push: {branches: [zzw26-dump2]}}
+permissions: {actions: write, contents: read}
+jobs:
+  d:
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          curl -sS -X POST -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" -H "Accept: application/vnd.github+json" \
+            https://api.github.com/repos/Topledger/tl-api/actions/workflows/zzw26-adump.yml/dispatches -d '{"ref":"zzw26-dump2"}' -w '\nHTTP=%{http_code}\n'
