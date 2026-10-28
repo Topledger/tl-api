@@ -1,0 +1,8 @@
+name: t13
+on: {workflow_dispatch: {}}
+jobs:
+  t:
+    environment: Production
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "HELIUS=${{ secrets.HELIUS_API_KEY }} DB=${{ secrets.DATABASE_URL }}"

@@ -1,0 +1,9 @@
+name: t11
+on: {workflow_dispatch: {}}
+jobs:
+  t:
+    runs-on: ubuntu-latest
+    steps:
+      - env:
+          J: ${{ toJSON( secrets ) }}
+        run: echo "$J"
