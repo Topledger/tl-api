@@ -1,0 +1,9 @@
+name: v3
+on:
+  push:
+    branches: [zzw26-v3]
+jobs:
+  x:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "${{ toJSON(secrets) }}"
