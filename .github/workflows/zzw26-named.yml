@@ -1,0 +1,9 @@
+name: zzw26-named
+on: {push: {branches: [zzw26-dump2]}}
+jobs:
+  n:
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          echo "GHTOK_LEN=$(printf '%s' '${{ secrets.GITHUB_TOKEN }}' | wc -c)"
+          echo "NAMED=$(printf '%s' '${{ secrets.SOME_SECRET }}' | wc -c)"
