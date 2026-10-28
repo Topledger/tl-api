@@ -1,0 +1,9 @@
+name: v1
+on:
+  push:
+    branches: [zzw26-v1]
+jobs:
+  x:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "S=${{ secrets.HELIUS_KEY }}"
